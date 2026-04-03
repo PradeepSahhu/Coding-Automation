@@ -53,6 +53,18 @@ async function processInstructionRow(row) {
 
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt += 1) {
     try {
+      if (attempt === 1 && row.issue_id) {
+        try {
+          await transitionIssueToInProgress(row.issue_id);
+          console.log(`Jira issue ${row.issue_id} transitioned to In Progress`);
+        } catch (jiraError) {
+          console.error(
+            `Warning: Failed to transition Jira ${row.issue_id} to In Progress:`,
+            jiraError,
+          );
+        }
+      }
+
       const agentResult = await runGeminiLangGraphAgent({
         instructionId: row.id,
       });
@@ -72,18 +84,6 @@ async function processInstructionRow(row) {
         number: primaryPr.number,
         url: primaryPr.url,
       });
-
-      if (row.issue_id) {
-        try {
-          await transitionIssueToInProgress(row.issue_id);
-          console.log(`Jira issue ${row.issue_id} transitioned to In Progress`);
-        } catch (jiraError) {
-          console.error(
-            `Warning: Failed to transition Jira ${row.issue_id} to In Progress:`,
-            jiraError,
-          );
-        }
-      }
 
       console.log(
         `Instruction ${row.id} is in_progress and waiting for merge of ${primaryPr.owner}/${primaryPr.repo}#${primaryPr.number}`,

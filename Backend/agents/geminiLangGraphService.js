@@ -63,25 +63,47 @@ function extractPullRequests(messages = []) {
 
 function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
   const contextText = context ? `\nAdditional context:\n${context}` : "";
+  const owner = process.env.GITHUB_REPO_OWNER || "";
+  const repo = process.env.GITHUB_REPO_NAME || "";
+  const base = process.env.GITHUB_BASE_BRANCH || "main";
 
   return [
-    "You are an execution agent.",
-    "Always follow the database instructions exactly unless they conflict with safety.",
-    "If the instructions require opening a pull request, call the tool create_github_pull_request.",
-    "When calling create_github_pull_request, you MUST provide issueId, featureName, base, title, and fileChanges.",
-    "fileChanges must contain full updated file content for each changed file.",
-    "Use branch format PR/<issueId>/<feature-name> via tool inputs.",
-    "Return concise, actionable output.",
+    "You are a coding execution agent. Your job is to implement the requested changes and open a GitHub pull request.",
+    "",
+    "CRITICAL RULES — you MUST follow these without exception:",
+    "1. You MUST call the tool `create_github_pull_request` before finishing. This is non-negotiable.",
+    "2. Do NOT respond with just text. The ONLY valid output is calling the tool.",
+    "3. Generate real working code files for the task described below.",
+    "4. fileChanges MUST contain at least one file with full file content.",
+    "5. Use EXACTLY these GitHub details — do NOT invent or change them:",
+    `   - owner: ${owner}`,
+    `   - repo: ${repo}`,
+    `   - base: ${base}`,
+    `   - issueId: ${issueId || "UNKNOWN"}`,
+    "",
+    "Tool call format:",
+    "  create_github_pull_request({",
+    `    owner: "${owner}",`,
+    `    repo: "${repo}",`,
+    `    base: "${base}",`,
+    `    issueId: "${issueId || "UNKNOWN"}",`,
+    "    featureName: <short-slug-of-task>,",
+    "    title: <PR title>,",
+    "    body: <PR description>,",
+    "    commitMessage: <commit message>,",
+    "    fileChanges: [{ path: <file path>, content: <full file content> }, ...]",
+    "  })",
     "",
     `Issue Id: ${issueId || "UNKNOWN"}`,
     "",
-    "Database instructions:",
+    "Task instructions:",
     dbInstructions,
     "",
-    "User request:",
-    userRequest || "No additional user request provided.",
+    userRequest ? `Additional request:\n${userRequest}` : "",
     contextText,
-  ].join("\n");
+  ]
+    .join("\n")
+    .trim();
 }
 
 export async function runGeminiLangGraphAgent({

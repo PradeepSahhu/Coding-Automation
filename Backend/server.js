@@ -11,7 +11,10 @@ import {
 import {
   createInstructionFromJiraAssignment,
   getInstructionByIssueId,
+  resetFailedInstructionToPending,
 } from "./Repository/instructionRepository.js";
+import { JiraConstants } from "./Utility/Constants.js";
+import { getIssueInformation } from "./Utility/JiraUtility.js";
 
 const app = express();
 
@@ -75,13 +78,7 @@ function getAssigneeIdentity(assignee) {
 
   return {
     accountId: assignee.accountId || null,
-    emailAddress: assignee.emailAddress || null,
-    displayName: assignee.displayName || null,
   };
-}
-
-function normalize(value) {
-  return `${value || ""}`.trim().toLowerCase();
 }
 
 function isAssignedToMe(assignee) {
@@ -92,24 +89,8 @@ function isAssignedToMe(assignee) {
   }
 
   const targetAccountId = process.env.JIRA_ASSIGNEE_ACCOUNT_ID;
-  const targetEmail = process.env.JIRA_ASSIGNEE_EMAIL;
-  const targetDisplayName = process.env.JIRA_ASSIGNEE_DISPLAY_NAME;
 
   if (targetAccountId && identity.accountId === targetAccountId) {
-    return true;
-  }
-
-  if (
-    targetEmail &&
-    normalize(identity.emailAddress) === normalize(targetEmail)
-  ) {
-    return true;
-  }
-
-  if (
-    targetDisplayName &&
-    normalize(identity.displayName) === normalize(targetDisplayName)
-  ) {
     return true;
   }
 
@@ -121,8 +102,8 @@ function shouldCreateInstructionFromJira(payload) {
   const assignee = payload?.issue?.fields?.assignee;
 
   if (
-    eventType === "jira:issue_created" ||
-    eventType === "jira:issue_updated"
+    eventType === JiraConstants.CREATED_EVENT ||
+    eventType === JiraConstants.UPDATED_EVENT
   ) {
     return isAssignedToMe(assignee);
   }
@@ -283,26 +264,6 @@ app.post("/jira-webhook", express.json(), async (req, res) => {
     }
 
     const issueId = data?.issue?.key;
-    const existing = await getInstructionByIssueId({ issueId });
-
-    if (
-      existing &&
-      (existing.status === "pending" || existing.status === "in_progress")
-    ) {
-      return res.status(200).json({
-        success: true,
-        created: false,
-        reason: `Instruction for ${issueId} already exists with status '${existing.status}'`,
-        instruction: existing,
-      });
-    }
-    const issueType = data?.issue?.fields?.issuetype?.name;
-    const summary = data?.issue?.fields?.summary;
-    const descriptionValue = data?.issue?.fields?.description;
-    const description =
-      typeof descriptionValue === "string"
-        ? descriptionValue
-        : JSON.stringify(descriptionValue || "");
 
     if (!issueId) {
       return res.status(400).json({
@@ -311,6 +272,59 @@ app.post("/jira-webhook", express.json(), async (req, res) => {
       });
     }
 
+    const { issueType, summary, descriptionText } = getIssueInformation(data);
+
+    const description =
+      typeof descriptionText === "string"
+        ? descriptionText
+        : JSON.stringify(descriptionText || "");
+
+    const instructionText = [
+      `A Jira ${issueType || "issue"} has been assigned to you.`,
+      `Issue: ${issueId}`,
+      `Source: jira-webhook-assigned`,
+      "",
+      "Task details:",
+      `Summary: ${summary || "No summary provided"}`,
+      `Description: ${description || "No description provided"}`,
+      "",
+      "Generate and apply the required code changes, then open/update the PR.",
+    ].join("\n");
+
+    const existingIssue = await getInstructionByIssueId({ issueId });
+
+    // Already actively being processed — skip to avoid duplicate work
+    if (existingIssue) {
+      console.log(
+        `Instruction for ${issueId} already active with status '${existingIssue.status}', skipping`,
+      );
+      return res.status(200).json({
+        success: true,
+        created: false,
+        reason: `Instruction for ${issueId} already active with status '${existingIssue.status}'`,
+        instruction: existingIssue,
+      });
+    }
+
+    // Previous attempt failed — reset it to pending with latest instructions
+    if (existingIssue && existingIssue.status === "failed") {
+      console.log(
+        `Instruction for ${issueId} was failed, resetting to pending with latest instructions`,
+      );
+      const reset = await resetFailedInstructionToPending({
+        instructionId: existingIssue.id,
+        instructions: instructionText,
+      });
+      return res.status(200).json({
+        success: true,
+        created: false,
+        reset: true,
+        reason: `Failed instruction for ${issueId} reset to pending`,
+        instruction: reset,
+      });
+    }
+
+    // No record yet, or previously completed — insert fresh
     const inserted = await createInstructionFromJiraAssignment({
       issueId,
       issueType,
@@ -318,6 +332,10 @@ app.post("/jira-webhook", express.json(), async (req, res) => {
       description,
       source: "jira-webhook-assigned",
     });
+
+    if (inserted) {
+      console.log("successfully inserted in the database");
+    }
 
     return res.status(200).json({
       success: true,

@@ -249,7 +249,7 @@ export async function getInstructionByIssueId({
 
   const tableRef = getSafeTableName(tableName);
   const query = `
-    SELECT id, issue_id, status, instructions
+    SELECT id, issue_id, status, instructions, pr_owner, pr_repo, pr_number, pr_url
     FROM ${tableRef}
     WHERE issue_id = $1
     ORDER BY id DESC
@@ -257,6 +257,30 @@ export async function getInstructionByIssueId({
   `;
 
   const result = await pool.query(query, [issueId]);
+  return result.rows?.[0] || null;
+}
+
+export async function resetFailedInstructionToPending({
+  instructionId,
+  instructions,
+  tableName = DEFAULT_TABLE_NAME,
+} = {}) {
+  const tableRef = getSafeTableName(tableName);
+  const query = `
+    UPDATE ${tableRef}
+    SET status = 'pending',
+        instructions = $2,
+        last_error = NULL,
+        completed_at = NULL,
+        pr_owner = NULL,
+        pr_repo = NULL,
+        pr_number = NULL,
+        pr_url = NULL
+    WHERE id = $1
+    RETURNING id, issue_id, status, created_at;
+  `;
+
+  const result = await pool.query(query, [instructionId, instructions]);
   return result.rows?.[0] || null;
 }
 

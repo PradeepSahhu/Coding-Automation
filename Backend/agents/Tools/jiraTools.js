@@ -20,10 +20,17 @@ function getJiraBaseUrl() {
   return baseUrl.replace(/\/$/, "");
 }
 
-export async function transitionIssueToStatus(issueKey, statusName) {
+function normalizeTransitionName(value) {
+  return `${value || ""}`
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+}
+
+export async function transitionIssueToStatus(issueKey, status) {
   const baseUrl = getJiraBaseUrl();
   const authHeader = getJiraAuthHeader();
-  const targetStatus = (statusName || "In Progress").toLowerCase();
+  const targetStatus = normalizeTransitionName(status || "In Progress");
 
   const transitionsResponse = await fetch(
     `${baseUrl}/rest/api/3/issue/${encodeURIComponent(issueKey)}/transitions`,
@@ -45,12 +52,17 @@ export async function transitionIssueToStatus(issueKey, statusName) {
 
   const transitionsData = await transitionsResponse.json();
   const transition = (transitionsData.transitions || []).find(
-    (item) => item?.name?.toLowerCase() === targetStatus,
+    (item) => normalizeTransitionName(item?.name) === targetStatus,
   );
 
   if (!transition?.id) {
+    const available = (transitionsData.transitions || [])
+      .map((item) => item?.name)
+      .filter(Boolean)
+      .join(", ");
+
     throw new Error(
-      `Jira transition '${statusName}' not found for issue ${issueKey}`,
+      `Jira transition '${status}' not found for issue ${issueKey}. Available transitions: ${available || "none"}`,
     );
   }
 
@@ -72,7 +84,7 @@ export async function transitionIssueToStatus(issueKey, statusName) {
   if (!updateResponse.ok) {
     const details = await updateResponse.text();
     throw new Error(
-      `Failed to transition Jira issue ${issueKey} to ${statusName}: ${details}`,
+      `Failed to transition Jira issue ${issueKey} to ${status}: ${details}`,
     );
   }
 }
@@ -85,5 +97,8 @@ export async function transitionIssueToDone(issueKey) {
 }
 
 export async function transitionIssueToInProgress(issueKey) {
-  return transitionIssueToStatus(issueKey, "In Progress");
+  return transitionIssueToStatus(
+    issueKey,
+    process.env.JIRA_IN_PROGRESS_TRANSITION_NAME || "In Progress",
+  );
 }
