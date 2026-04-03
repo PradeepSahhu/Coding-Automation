@@ -17,3 +17,9 @@ ngrok http 3000
 ### Initial Design of the System:
 
 <img src="images/initial_desgn_v1.png" alt="Initial Design of the System" width="800"/>
+
+to check the db :-
+
+```
+docker exec -i coding_automation_db psql -U agentuser -d agentdb -c "SELECT * FROM agent_instructions ORDER BY id;"
+```

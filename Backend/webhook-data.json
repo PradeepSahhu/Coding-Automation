@@ -1,7 +1,7 @@
 {
-  "timestamp": 1775159978785,
-  "webhookEvent": "jira:issue_updated",
-  "issue_event_type_name": "issue_updated",
+  "timestamp": 1775208821054,
+  "webhookEvent": "jira:issue_created",
+  "issue_event_type_name": "issue_created",
   "user": {
     "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/user?accountId=712020%3A18543919-978a-4131-abc3-7daab55bee57",
     "accountId": "712020:18543919-978a-4131-abc3-7daab55bee57",
@@ -17,11 +17,11 @@
     "accountType": "atlassian"
   },
   "issue": {
-    "id": "10007",
-    "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issue/10007",
-    "key": "STONE-2",
+    "id": "10106",
+    "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issue/10106",
+    "key": "STONE-5",
     "fields": {
-      "statuscategorychangedate": "2026-04-02T10:14:32.016+0530",
+      "statuscategorychangedate": "2026-04-03T15:03:41.133+0530",
       "issuetype": {
         "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issuetype/10011",
         "id": "10011",
@@ -32,45 +32,6 @@
         "avatarId": 10315,
         "entityId": "37e81afb-75e7-469b-a170-d0590166cf56",
         "hierarchyLevel": 0
-      },
-      "parent": {
-        "id": "10005",
-        "key": "STONE-1",
-        "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issue/10005",
-        "fields": {
-          "summary": "Kafka System",
-          "status": {
-            "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/status/10005",
-            "description": "",
-            "iconUrl": "https://officialpradeepsahu.atlassian.net/",
-            "name": "To Do",
-            "id": "10005",
-            "statusCategory": {
-              "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/statuscategory/2",
-              "id": 2,
-              "key": "new",
-              "colorName": "blue-gray",
-              "name": "To Do"
-            }
-          },
-          "priority": {
-            "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/priority/3",
-            "iconUrl": "https://officialpradeepsahu.atlassian.net/images/icons/priorities/medium_new.svg",
-            "name": "Medium",
-            "id": "3"
-          },
-          "issuetype": {
-            "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issuetype/10012",
-            "id": "10012",
-            "description": "A collection of related bugs, stories, and tasks.",
-            "iconUrl": "https://officialpradeepsahu.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
-            "name": "Epic",
-            "subtask": false,
-            "avatarId": 10307,
-            "entityId": "4a9a3518-3d04-4d2b-8a17-2fde5050a236",
-            "hierarchyLevel": 1
-          }
-        }
       },
       "components": [],
       "timespent": null,
@@ -89,8 +50,9 @@
           "32x32": "https://officialpradeepsahu.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/10407?size=medium"
         }
       },
-      "description": "Setup the whole Kafka Consumer Event to the github project, which will create this settings in the github using the agents",
+      "description": null,
       "fixVersions": [],
+      "customfield_10034": null,
       "statusCategory": {
         "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/statuscategory/2",
         "id": 2,
@@ -107,17 +69,17 @@
       "aggregatetimeestimate": null,
       "resolutiondate": null,
       "workratio": -1,
-      "summary": "Kafka Consumer setup to consume pseudo data",
-      "watches": {
-        "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issue/STONE-2/watchers",
-        "watchCount": 1,
-        "isWatching": true
-      },
+      "summary": "New Sub Story to check the method",
       "issuerestriction": {
         "issuerestrictions": {},
         "shouldDisplay": true
       },
-      "lastViewed": "2026-04-03T01:27:26.643+0530",
+      "lastViewed": null,
+      "watches": {
+        "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issue/STONE-5/watchers",
+        "watchCount": 0,
+        "isWatching": false
+      },
       "creator": {
         "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/user?accountId=712020%3A18543919-978a-4131-abc3-7daab55bee57",
         "accountId": "712020:18543919-978a-4131-abc3-7daab55bee57",
@@ -133,18 +95,8 @@
         "accountType": "atlassian"
       },
       "subtasks": [],
-      "created": "2026-04-02T10:10:46.045+0530",
-      "customfield_10020": [
-        {
-          "id": 3,
-          "name": "STONE Sprint 1",
-          "state": "active",
-          "boardId": 2,
-          "goal": "",
-          "startDate": "2026-04-02T04:41:52.922Z",
-          "endDate": "2026-04-15T18:30:00.000Z"
-        }
-      ],
+      "created": "2026-04-03T15:03:40.596+0530",
+      "customfield_10020": null,
       "reporter": {
         "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/user?accountId=712020%3A18543919-978a-4131-abc3-7daab55bee57",
         "accountId": "712020:18543919-978a-4131-abc3-7daab55bee57",
@@ -174,7 +126,7 @@
       "labels": [],
       "customfield_10016": null,
       "environment": null,
-      "customfield_10019": "0|i0001b:",
+      "customfield_10019": "0|i0001z:",
       "timeestimate": null,
       "aggregatetimeoriginalestimate": null,
       "versions": [],
@@ -183,12 +135,12 @@
         "progress": 0,
         "total": 0
       },
-      "issuelinks": [],
       "votes": {
-        "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issue/STONE-2/votes",
+        "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/issue/STONE-5/votes",
         "votes": 0,
         "hasVoted": false
       },
+      "issuelinks": [],
       "assignee": {
         "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/user?accountId=712020%3A18543919-978a-4131-abc3-7daab55bee57",
         "accountId": "712020:18543919-978a-4131-abc3-7daab55bee57",
@@ -203,7 +155,7 @@
         "timeZone": "Asia/Calcutta",
         "accountType": "atlassian"
       },
-      "updated": "2026-04-03T01:29:38.785+0530",
+      "updated": "2026-04-03T15:03:40.596+0530",
       "status": {
         "self": "https://officialpradeepsahu.atlassian.net/rest/api/2/status/10005",
         "description": "",
@@ -221,16 +173,56 @@
     }
   },
   "changelog": {
-    "id": "10092",
+    "id": "10127",
     "items": [
       {
-        "field": "description",
+        "field": "summary",
         "fieldtype": "jira",
-        "fieldId": "description",
+        "fieldId": "summary",
         "from": null,
         "fromString": null,
         "to": null,
-        "toString": "Setup the whole Kafka Consumer Event to the github project, which will create this settings in the github using the agents"
+        "toString": "New Sub Story to check the method"
+      },
+      {
+        "field": "Status",
+        "fieldtype": "jira",
+        "fieldId": "status",
+        "from": null,
+        "fromString": null,
+        "to": "10005",
+        "toString": "To Do"
+      },
+      {
+        "field": "priority",
+        "fieldtype": "jira",
+        "fieldId": "priority",
+        "from": null,
+        "fromString": null,
+        "to": "3",
+        "toString": "Medium"
+      },
+      {
+        "field": "assignee",
+        "fieldtype": "jira",
+        "fieldId": "assignee",
+        "from": null,
+        "fromString": null,
+        "to": "712020:18543919-978a-4131-abc3-7daab55bee57",
+        "toString": "pradeep sahu",
+        "tmpFromAccountId": null,
+        "tmpToAccountId": "712020:18543919-978a-4131-abc3-7daab55bee57"
+      },
+      {
+        "field": "reporter",
+        "fieldtype": "jira",
+        "fieldId": "reporter",
+        "from": null,
+        "fromString": null,
+        "to": "712020:18543919-978a-4131-abc3-7daab55bee57",
+        "toString": "pradeep sahu",
+        "tmpFromAccountId": null,
+        "tmpToAccountId": "712020:18543919-978a-4131-abc3-7daab55bee57"
       }
     ]
   }
