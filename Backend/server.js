@@ -352,6 +352,16 @@ app.post("/jira-webhook", express.json(), async (req, res) => {
   }
 });
 
+app.get("/api/instructions", async (req, res) => {
+  try {
+    const instructions = await getAllInstructions();
+    return res.status(200).json({ success: true, instructions });
+  } catch (error) {
+    console.error("Error fetching instructions:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 async function bootstrap() {
   const { modelName } = await validateGeminiModelConfiguration();
   console.log(`Gemini model '${modelName}' validated successfully`);

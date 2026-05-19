@@ -44,9 +44,16 @@ The **Coding Automation** project is an autonomous system designed to handle Jir
     ```
 3.  **Run Backend (Development):**
     ```bash
+    cd Backend
     npm run dev
     ```
-4.  **Expose for Webhooks:**
+4.  **Run UI (Development):**
+    ```bash
+    cd UI
+    npm install
+    npm run dev
+    ```
+5.  **Expose for Webhooks:**
     ```bash
     ngrok http 3000
     ```

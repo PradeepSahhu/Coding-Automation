@@ -352,13 +352,19 @@ export async function insertInstructionIntoDeadLetterQueue({
 
   await pool.query(createTableQuery);
 
-  const result = await pool.query(insertQuery, [
-    Number(instructionId),
-    issueId || null,
-    instructions || null,
-    errorMessage?.slice(0, 4000) || null,
-    Number.isFinite(Number(attempts)) ? Number(attempts) : 0,
-  ]);
-
   return result.rows?.[0] || null;
+}
+
+export async function getAllInstructions({
+  tableName = DEFAULT_TABLE_NAME,
+} = {}) {
+  const tableRef = getSafeTableName(tableName);
+  const query = `
+    SELECT id, issue_id, instructions, status, last_error, pr_owner, pr_repo, pr_number, pr_url, created_at, completed_at
+    FROM ${tableRef}
+    ORDER BY created_at DESC;
+  `;
+
+  const result = await pool.query(query);
+  return result.rows;
 }
