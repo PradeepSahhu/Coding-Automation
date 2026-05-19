@@ -24,8 +24,9 @@ This document details the step-by-step process of how the Coding Automation syst
 - **Execution:**
   - The agent applies code changes locally.
   - It uses the `githubTools` to create a new branch.
+  - **Robust Committing:** The system uses a retry mechanism (exponential backoff) when committing files to GitHub to handle transient API errors or race conditions.
   - It commits the changes and pushes the branch to GitHub.
-  - Finally, it opens a Pull Request (PR) and saves the PR URL back to the database.
+  - Finally, it opens a Pull Request (PR) or reuses an existing open one, then saves the PR URL back to the database.
 
 ## 4. Feedback & Iteration (GitHub Webhook)
 - **PR Reviews:** If a human reviewer requests changes on GitHub, the `/github-webhook` receives a `pull_request_review` event.

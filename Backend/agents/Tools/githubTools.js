@@ -102,6 +102,30 @@ async function ensureBranch({ octokit, owner, repo, base, branchName }) {
   return branchRef.object.sha;
 }
 
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetry(fn, { maxRetries = 3, delay = 2000 } = {}) {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      console.warn(`GitHub tool operation failed (attempt ${i + 1}/${maxRetries}):`, error.message);
+      if (i < maxRetries - 1) {
+        await sleep(delay * (i + 1));
+      }
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Commits a list of file changes to a specific GitHub branch.
+ * Uses a retry mechanism to handle potential conflicts during multi-step git operations.
+ */
 async function commitFileChanges({
   octokit,
   owner,
@@ -110,58 +134,62 @@ async function commitFileChanges({
   commitMessage,
   fileChanges,
 }) {
-  const branchRef = await getBranchRef({
-    octokit,
-    owner,
-    repo,
-    branch: branchName,
-  });
-  const latestCommitSha = branchRef.object.sha;
-  const latestCommit = await octokit.git.getCommit({
-    owner,
-    repo,
-    commit_sha: latestCommitSha,
-  });
-
-  const treeItems = [];
-
-  for (const file of fileChanges) {
-    const blob = await octokit.git.createBlob({
+  return withRetry(async () => {
+    console.log(`Committing ${fileChanges.length} files to branch ${branchName}...`);
+    const branchRef = await getBranchRef({
+      octokit,
       owner,
       repo,
-      content: file.content,
-      encoding: "utf-8",
+      branch: branchName,
+    });
+    const latestCommitSha = branchRef.object.sha;
+    const latestCommit = await octokit.git.getCommit({
+      owner,
+      repo,
+      commit_sha: latestCommitSha,
     });
 
-    treeItems.push({
-      path: file.path,
-      mode: "100644",
-      type: "blob",
-      sha: blob.data.sha,
+    const treeItems = [];
+
+    for (const file of fileChanges) {
+      const blob = await octokit.git.createBlob({
+        owner,
+        repo,
+        content: file.content,
+        encoding: "utf-8",
+      });
+
+      treeItems.push({
+        path: file.path,
+        mode: "100644",
+        type: "blob",
+        sha: blob.data.sha,
+      });
+    }
+
+    const tree = await octokit.git.createTree({
+      owner,
+      repo,
+      base_tree: latestCommit.data.tree.sha,
+      tree: treeItems,
     });
-  }
 
-  const tree = await octokit.git.createTree({
-    owner,
-    repo,
-    base_tree: latestCommit.data.tree.sha,
-    tree: treeItems,
-  });
+    const commit = await octokit.git.createCommit({
+      owner,
+      repo,
+      message: commitMessage,
+      tree: tree.data.sha,
+      parents: [latestCommitSha],
+    });
 
-  const commit = await octokit.git.createCommit({
-    owner,
-    repo,
-    message: commitMessage,
-    tree: tree.data.sha,
-    parents: [latestCommitSha],
-  });
-
-  await octokit.git.updateRef({
-    owner,
-    repo,
-    ref: `heads/${branchName}`,
-    sha: commit.data.sha,
-    force: true,
+    await octokit.git.updateRef({
+      owner,
+      repo,
+      ref: `heads/${branchName}`,
+      sha: commit.data.sha,
+      force: true,
+    });
+    console.log(`Successfully committed changes to ${branchName}`);
   });
 }
 
@@ -174,6 +202,7 @@ async function createOrReusePullRequest({
   base,
   body,
 }) {
+  console.log(`Checking for existing PR from ${head} to ${base}...`);
   const existing = await octokit.pulls.list({
     owner,
     repo,
@@ -184,9 +213,12 @@ async function createOrReusePullRequest({
   });
 
   if (existing.data.length > 0) {
-    return existing.data[0];
+    const pr = existing.data[0];
+    console.log(`Reusing existing PR #${pr.number}`);
+    return pr;
   }
 
+  console.log(`Creating new PR: "${title}"`);
   const response = await octokit.pulls.create({
     owner,
     repo,
@@ -196,6 +228,7 @@ async function createOrReusePullRequest({
     body,
   });
 
+  console.log(`Successfully created PR #${response.data.number}`);
   return response.data;
 }
 
@@ -212,46 +245,53 @@ export function createPullRequestTool() {
       commitMessage,
       fileChanges,
     }) => {
-      const octokit = getOctokitFromEnv();
-      const target = resolveGitHubTarget({ owner, repo, base });
-      const branchName = buildBranchName({ issueId, featureName });
+      try {
+        const octokit = getOctokitFromEnv();
+        const target = resolveGitHubTarget({ owner, repo, base });
+        const branchName = buildBranchName({ issueId, featureName });
 
-      await ensureBranch({
-        octokit,
-        owner: target.owner,
-        repo: target.repo,
-        base: target.base,
-        branchName,
-      });
+        console.log(`Starting PR creation process for issue ${issueId} in ${target.owner}/${target.repo}`);
 
-      await commitFileChanges({
-        octokit,
-        owner: target.owner,
-        repo: target.repo,
-        branchName,
-        commitMessage: commitMessage || `feat(${issueId}): ${title}`,
-        fileChanges,
-      });
+        await ensureBranch({
+          octokit,
+          owner: target.owner,
+          repo: target.repo,
+          base: target.base,
+          branchName,
+        });
 
-      const pullRequest = await createOrReusePullRequest({
-        octokit,
-        owner: target.owner,
-        repo: target.repo,
-        title,
-        head: branchName,
-        base: target.base,
-        body,
-      });
+        await commitFileChanges({
+          octokit,
+          owner: target.owner,
+          repo: target.repo,
+          branchName,
+          commitMessage: commitMessage || `feat(${issueId}): ${title}`,
+          fileChanges,
+        });
 
-      return JSON.stringify({
-        owner: target.owner,
-        repo: target.repo,
-        id: pullRequest.id,
-        number: pullRequest.number,
-        url: pullRequest.html_url,
-        state: pullRequest.state,
-        branchName,
-      });
+        const pullRequest = await createOrReusePullRequest({
+          octokit,
+          owner: target.owner,
+          repo: target.repo,
+          title,
+          head: branchName,
+          base: target.base,
+          body,
+        });
+
+        return JSON.stringify({
+          owner: target.owner,
+          repo: target.repo,
+          id: pullRequest.id,
+          number: pullRequest.number,
+          url: pullRequest.html_url,
+          state: pullRequest.state,
+          branchName,
+        });
+      } catch (error) {
+        console.error("Critical failure in create_github_pull_request tool:", error);
+        throw error;
+      }
     },
     {
       name: "create_github_pull_request",
@@ -301,5 +341,8 @@ export function createPullRequestTool() {
           .describe("List of file changes to commit"),
       }),
     },
+  );
+}
+ },
   );
 }
