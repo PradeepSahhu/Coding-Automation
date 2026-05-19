@@ -1,5 +1,9 @@
 import crypto from "crypto";
 
+/**
+ * Normalizes the GitHub webhook body into a JSON payload and raw Buffer.
+ * Handles Buffer, string, and object inputs for consistent processing.
+ */
 export function parseGitHubWebhookBody(body) {
   if (Buffer.isBuffer(body)) {
     const text = body.toString("utf8");
@@ -42,4 +46,6 @@ export function isAssignedToMe(assignee) {
 
   const targetAccountId = process.env.JIRA_ASSIGNEE_ACCOUNT_ID;
   return targetAccountId && identity.accountId === targetAccountId;
+}
+ntId;
 }

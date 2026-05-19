@@ -14,6 +14,10 @@ import { parseGitHubWebhookBody, isAssignedToMe } from "../Utility/WebhookUtilit
 import { JiraConstants } from "../Utility/Constants.js";
 import { getIssueInformation } from "../Utility/JiraUtility.js";
 
+/**
+ * Handles incoming GitHub webhook events including PR merges, reviews, and comments.
+ * Triggers agent actions for PR updates or marks tasks as completed upon merge.
+ */
 export const githubWebhookHandler = async (req, res) => {
   try {
     const event = req.headers["x-github-event"];

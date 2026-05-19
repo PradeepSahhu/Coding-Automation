@@ -204,6 +204,10 @@ export async function startAgentWorker() {
   );
 }
 
+/**
+ * Updates the system state when a Pull Request associated with an instruction is merged.
+ * Marks the task as completed and transitions the linked Jira issue to 'Done'.
+ */
 export async function handlePullRequestMerged({ owner, repo, number }) {
   const record = await getInstructionByPullRequest({ owner, repo, number });
 
@@ -285,3 +289,4 @@ export async function handlePullRequestClosedWithoutMerge({
     message: `Instruction ${updated.id} marked failed because PR closed without merge`,
   };
 }
+

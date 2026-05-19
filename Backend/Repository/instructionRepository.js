@@ -233,6 +233,10 @@ export async function markInstructionClosedWithoutMerge({
   return updated.rows?.[0] || null;
 }
 
+/**
+ * Creates and returns a new PostgreSQL client configured for listening to notifications.
+ * Used by the worker to respond to real-time 'LISTEN/NOTIFY' events.
+ */
 export async function createInstructionListenerClient() {
   const listenerClient = new Client(dbConfig);
   await listenerClient.connect();
@@ -384,4 +388,6 @@ export async function getAllInstructions({
 
   const result = await pool.query(query);
   return result.rows;
+}
+lt.rows;
 }

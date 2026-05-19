@@ -103,6 +103,10 @@ export async function transitionIssueToInProgress(issueKey) {
   );
 }
 
+/**
+ * Fetches full details for a Jira issue including summary, description, and comments.
+ * Used by the agent to obtain live context directly from the Jira API.
+ */
 export async function getJiraIssueDetails(issueKey) {
   const baseUrl = getJiraBaseUrl();
   const authHeader = getJiraAuthHeader();

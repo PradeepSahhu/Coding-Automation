@@ -10,10 +10,16 @@ export const getInstructions = async (req, res) => {
   }
 };
 
+/**
+ * Simple health check endpoint to verify that the backend server is running.
+ * Returns the current timestamp and a success message.
+ */
 export const healthCheck = (req, res) => {
   res.status(200).json({
     success: true,
     message: "Coding Automation Backend is healthy",
     timestamp: new Date().toISOString(),
+  });
+};
   });
 };
