@@ -102,3 +102,37 @@ export async function transitionIssueToInProgress(issueKey) {
     process.env.JIRA_IN_PROGRESS_TRANSITION_NAME || "In Progress",
   );
 }
+
+export async function getJiraIssueDetails(issueKey) {
+  const baseUrl = getJiraBaseUrl();
+  const authHeader = getJiraAuthHeader();
+
+  const response = await fetch(
+    `${baseUrl}/rest/api/3/issue/${encodeURIComponent(issueKey)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: authHeader,
+        Accept: "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`Failed to fetch Jira issue ${issueKey}: ${details}`);
+  }
+
+  const data = await response.json();
+  return {
+    key: data.key,
+    summary: data.fields?.summary,
+    description: data.fields?.description, // Returns ADF (Atlassian Document Format) or text depending on version
+    status: data.fields?.status?.name,
+    comments: data.fields?.comment?.comments?.map(c => ({
+      author: c.author?.displayName,
+      body: c.body,
+      created: c.created
+    })) || []
+  };
+}

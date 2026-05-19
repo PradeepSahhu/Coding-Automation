@@ -4,6 +4,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage } from "@langchain/core/messages";
 import { getInstructionFromDb } from "../Repository/instructionRepository.js";
 import { createPullRequestTool } from "./Tools/githubTools.js";
+import { createJiraTools } from "./Tools/jiraAgentTools.js";
 
 function normalizeContentToText(rawContent) {
   if (!rawContent) {
@@ -179,6 +180,8 @@ function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
     `   - base: ${base}`,
     `   - issueId: ${issueId || "UNKNOWN"}`,
     "",
+    "OPTIONAL: If the provided instructions are unclear or you suspect there are recent updates/comments, you MAY call `get_jira_issue_details` to fetch the live context from Jira before implementing.",
+    "",
     "Tool call format:",
     "  create_github_pull_request({",
     `    owner: "${owner}",`,
@@ -244,7 +247,7 @@ export async function runGeminiLangGraphAgent({
     temperature: 0,
   });
 
-  const tools = [createPullRequestTool()];
+  const tools = [createPullRequestTool(), ...createJiraTools()];
 
   const agent = createReactAgent({
     llm: model,

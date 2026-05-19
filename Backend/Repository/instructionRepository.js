@@ -319,6 +319,23 @@ export async function createInstructionFromJiraAssignment({
   return result.rows?.[0] || null;
 }
 
+export async function updateInstructionText({
+  instructionId,
+  instructions,
+  tableName = DEFAULT_TABLE_NAME,
+} = {}) {
+  const tableRef = getSafeTableName(tableName);
+  const query = `
+    UPDATE ${tableRef}
+    SET instructions = $2, created_at = NOW()
+    WHERE id = $1 AND status = 'pending'
+    RETURNING id, issue_id, status;
+  `;
+
+  const result = await pool.query(query, [instructionId, instructions]);
+  return result.rows?.[0] || null;
+}
+
 export async function insertInstructionIntoDeadLetterQueue({
   instructionId,
   issueId,

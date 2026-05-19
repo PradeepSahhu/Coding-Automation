@@ -6,7 +6,9 @@ This document details the step-by-step process of how the Coding Automation syst
 - **Trigger:** A Jira issue is created or updated and assigned to the configured Agent account.
 - **Handler:** The Backend receives a POST request at `/jira-webhook`.
 - **Validation:** The system checks if the assignee matches `JIRA_ASSIGNEE_ACCOUNT_ID`.
-- **Persistence:** If valid, the issue details (Key, Summary, Description) are parsed and stored in the `agent_instructions` table with a `pending` status.
+- **Persistence:** 
+  - If no pending task exists for the issue, it creates a new entry in `agent_instructions`.
+  - If a **pending** task already exists, it updates the instructions with the latest details, ensuring the agent always has the most recent context.
 - **Notification:** PostgreSQL triggers a `pg_notify` on the `agent_instruction_created` channel.
 
 ## 2. Worker Orchestration
@@ -15,7 +17,9 @@ This document details the step-by-step process of how the Coding Automation syst
 - **Retry Logic:** If an agent fails, the worker retries the task up to 3 times with exponential backoff before moving it to the `dead_letter_queue`.
 
 ## 3. Autonomous Agent Execution (LangGraph + Gemini)
-- **Context Gathering:** The agent reads the project files and the specific instructions from the database.
+- **Context Gathering:** 
+  - The agent reads the project files and the snapshot instructions from the database.
+  - **Hybrid Logic:** If the agent finds the instructions ambiguous or suspects recent changes, it can use the `get_jira_issue_details` tool to fetch live data (description, comments, status) directly from the Jira API.
 - **Decision Making:** Using the Gemini LLM, the agent decides which files need modification.
 - **Execution:**
   - The agent applies code changes locally.

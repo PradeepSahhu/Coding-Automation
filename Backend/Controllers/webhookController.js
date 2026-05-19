@@ -7,7 +7,8 @@ import {
 import { 
   createInstructionFromJiraAssignment, 
   getInstructionByIssueId, 
-  resetFailedInstructionToPending 
+  resetFailedInstructionToPending,
+  updateInstructionText
 } from "../Repository/instructionRepository.js";
 import { parseGitHubWebhookBody, isAssignedToMe } from "../Utility/WebhookUtility.js";
 import { JiraConstants } from "../Utility/Constants.js";
@@ -103,6 +104,12 @@ export const jiraWebhookHandler = async (req, res) => {
       }
     }
     return res.status(200).json({ success: true, ignored: true });
+  } catch (error) {
+    console.error("Jira Webhook Error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+rn res.status(200).json({ success: true, ignored: true });
   } catch (error) {
     console.error("Jira Webhook Error:", error);
     return res.status(500).json({ success: false, message: error.message });

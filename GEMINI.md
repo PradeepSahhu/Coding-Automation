@@ -100,6 +100,11 @@ The following environment variables are required in `Backend/.env`:
 - `GITHUB_TOKEN`: Personal Access Token for PR creation.
 - `GITHUB_WEBHOOK_SECRET`: For validating incoming GitHub webhooks.
 - `JIRA_HOST`, `JIRA_EMAIL`, `JIRA_API_TOKEN`: For Jira API interactions.
+- `JIRA_BASE_URL`: The full URL of your Jira instance (e.g., https://your-domain.atlassian.net).
+- `JIRA_ASSIGNEE_ACCOUNT_ID`: The ID of the user the agent should listen for.
+- `DATABASE_URL`: Connection string for PostgreSQL.
+- `AGENT_POLLING_INTERVAL_MS`: (Optional) Database polling interval in milliseconds (default: 30000).
+`, `JIRA_API_TOKEN`: For Jira API interactions.
 - `JIRA_ASSIGNEE_ACCOUNT_ID`: The ID of the user the agent should listen for.
 - `DATABASE_URL`: Connection string for PostgreSQL.
 - `AGENT_POLLING_INTERVAL_MS`: (Optional) Database polling interval in milliseconds (default: 30000).
