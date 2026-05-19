@@ -65,5 +65,4 @@ Register the ngrok URL in your [Jira Webhooks](https://officialpradeepsahu.atlas
   ```
 - **Deploy to Vercel:** `vercel` (Requires environment variable configuration).
 
----
-*Built with ❤️ using Gemini, LangGraph, and Node.js.*
+
