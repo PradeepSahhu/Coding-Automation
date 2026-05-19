@@ -140,3 +140,48 @@ export async function getJiraIssueDetails(issueKey) {
     })) || []
   };
 }
+
+/**
+ * Posts a new comment to a Jira issue.
+ * Used by the agent to provide feedback or progress updates.
+ */
+export async function postJiraComment(issueKey, commentText) {
+  const baseUrl = getJiraBaseUrl();
+  const authHeader = getJiraAuthHeader();
+
+  const response = await fetch(
+    `${baseUrl}/rest/api/3/issue/${encodeURIComponent(issueKey)}/comment`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        body: {
+          type: "doc",
+          version: 1,
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  text: commentText,
+                  type: "text",
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`Failed to post comment to Jira issue ${issueKey}: ${details}`);
+  }
+
+  return await response.json();
+}

@@ -3,7 +3,8 @@ import { z } from "zod";
 import { 
   getJiraIssueDetails, 
   transitionIssueToInProgress, 
-  transitionIssueToDone 
+  transitionIssueToDone,
+  postJiraComment
 } from "./jiraTools.js";
 
 export function createJiraTools() {
@@ -25,5 +26,24 @@ export function createJiraTools() {
     }
   );
 
-  return [getDetailsTool];
+  const postCommentTool = tool(
+    async ({ issueKey, comment }) => {
+      try {
+        await postJiraComment(issueKey, comment);
+        return `Successfully posted comment to ${issueKey}`;
+      } catch (error) {
+        return `Error posting Jira comment: ${error.message}`;
+      }
+    },
+    {
+      name: "post_jira_comment",
+      description: "Posts a comment back to a Jira issue. Use this to provide feedback, ask clarifying questions, or notify users of progress.",
+      schema: z.object({
+        issueKey: z.string().describe("The Jira issue key, e.g., 'PROJ-123'"),
+        comment: z.string().describe("The text of the comment to post"),
+      }),
+    }
+  );
+
+  return [getDetailsTool, postCommentTool];
 }

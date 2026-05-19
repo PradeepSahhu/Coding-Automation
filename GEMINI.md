@@ -86,11 +86,16 @@ docker exec -i coding_automation_db psql -U agentuser -d agentdb -c "SELECT * FR
 - **Error Handling:** Failed instructions are moved to a `dead_letter_queue` after several retries.
 - **Persistence:** All state transitions for an instruction (pending -> in_progress -> completed/failed) are tracked in the DB.
 
+### Agent Capabilities
+- **Autonomous Coding:** Analyzes directory structure and implements logic based on instructions.
+- **Jira Interaction:** Can fetch live updates (comments, description) and post comments back to Jira issues using the `get_jira_issue_details` and `post_jira_comment` tools.
+- **GitHub PRs:** Handles branch creation, commits, and PR submission automatically.
+
 ### Key Directories
 - `Backend/server.js`: Main entry point and webhook handlers.
 - `Backend/agents/`: Core logic for the AI worker and LangGraph service.
 - `Backend/agents/Tools/`: Custom tools available to the Gemini agent (GitHub/Jira interaction).
-- `Backend/Repository/`: Database abstraction layer for instruction management.
+- `Backend/Repository/instructionRepository.js`: Database abstraction layer for instruction management.
 - `Backend/Utility/`: Constants and helper functions for external API integrations.
 - `Backend/db/`: Database initialization scripts and schema definitions.
 
@@ -101,10 +106,6 @@ The following environment variables are required in `Backend/.env`:
 - `GITHUB_WEBHOOK_SECRET`: For validating incoming GitHub webhooks.
 - `JIRA_HOST`, `JIRA_EMAIL`, `JIRA_API_TOKEN`: For Jira API interactions.
 - `JIRA_BASE_URL`: The full URL of your Jira instance (e.g., https://your-domain.atlassian.net).
-- `JIRA_ASSIGNEE_ACCOUNT_ID`: The ID of the user the agent should listen for.
-- `DATABASE_URL`: Connection string for PostgreSQL.
-- `AGENT_POLLING_INTERVAL_MS`: (Optional) Database polling interval in milliseconds (default: 30000).
-`, `JIRA_API_TOKEN`: For Jira API interactions.
 - `JIRA_ASSIGNEE_ACCOUNT_ID`: The ID of the user the agent should listen for.
 - `DATABASE_URL`: Connection string for PostgreSQL.
 - `AGENT_POLLING_INTERVAL_MS`: (Optional) Database polling interval in milliseconds (default: 30000).

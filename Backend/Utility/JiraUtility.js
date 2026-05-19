@@ -7,3 +7,12 @@ export function getIssueInformation(data) {
 
   return { issueType, summary, descriptionText };
 }
+
+/**
+ * Extracts comment information from a Jira webhook payload.
+ * Handles both plain text and potentially structured ADF formats.
+ */
+export function getCommentInformation(data) {
+  const commentBody = data?.comment?.body;
+  return { commentBody };
+}

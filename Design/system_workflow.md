@@ -3,12 +3,12 @@
 This document details the step-by-step process of how the Coding Automation system handles autonomous software engineering tasks.
 
 ## 1. Task Ingestion (Jira Webhook)
-- **Trigger:** A Jira issue is created or updated and assigned to the configured Agent account.
+- **Trigger:** A Jira issue is created, updated, or a **new comment** is posted, provided the issue is assigned to the configured Agent account.
 - **Handler:** The Backend receives a POST request at `/jira-webhook`.
 - **Validation:** The system checks if the assignee matches `JIRA_ASSIGNEE_ACCOUNT_ID`.
 - **Persistence:** 
   - If no pending task exists for the issue, it creates a new entry in `agent_instructions`.
-  - If a **pending** task already exists, it updates the instructions with the latest details, ensuring the agent always has the most recent context.
+  - If a **pending** task already exists, it updates or appends the instructions with the latest details/comments, ensuring the agent always has the most recent context.
 - **Notification:** PostgreSQL triggers a `pg_notify` on the `agent_instruction_created` channel.
 
 ## 2. Worker Orchestration
@@ -28,10 +28,11 @@ This document details the step-by-step process of how the Coding Automation syst
   - It commits the changes and pushes the branch to GitHub.
   - Finally, it opens a Pull Request (PR) or reuses an existing open one, then saves the PR URL back to the database.
 
-## 4. Feedback & Iteration (GitHub Webhook)
-- **PR Reviews:** If a human reviewer requests changes on GitHub, the `/github-webhook` receives a `pull_request_review` event.
-- **Follow-up:** The system automatically creates a new "follow-up" instruction linked to the same PR, which the agent picks up to apply fixes.
-- **Triggered Fixes:** Users can also trigger the agent manually by commenting `[agent-fix]` on any PR.
+## 4. Feedback & Iteration (Webhook Triggers)
+- **GitHub PR Reviews:** If a human reviewer requests changes on GitHub, the system creates a follow-up instruction for the agent.
+- **Jira Comments:** When a user posts a comment on the Jira story, the system triggers the agent to analyze the comment, implement requested changes, and provide feedback.
+- **Agent Feedback:** The agent can use the `post_jira_comment` tool to communicate directly back to Jira, providing status updates or asking for clarification.
+- **Triggered Fixes:** Users can also trigger the agent manually by commenting `[agent-fix]` on any GitHub PR.
 
 ## 5. Completion & Synchronization
 - **Merge Event:** When the PR is merged, the GitHub webhook notifies the backend.

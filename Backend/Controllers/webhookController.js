@@ -12,7 +12,7 @@ import {
 } from "../Repository/instructionRepository.js";
 import { parseGitHubWebhookBody, isAssignedToMe } from "../Utility/WebhookUtility.js";
 import { JiraConstants } from "../Utility/Constants.js";
-import { getIssueInformation } from "../Utility/JiraUtility.js";
+import { getIssueInformation, getCommentInformation } from "../Utility/JiraUtility.js";
 
 /**
  * Handles incoming GitHub webhook events including PR merges, reviews, and comments.
@@ -84,8 +84,10 @@ export const jiraWebhookHandler = async (req, res) => {
 
     await fs.promises.appendFile("webhook-data.json", JSON.stringify(data, null, 2));
 
+    const issueId = data.issue?.key;
+    if (!issueId) return res.status(200).json({ success: true, ignored: true });
+
     if ((eventType === JiraConstants.CREATED_EVENT || eventType === JiraConstants.UPDATED_EVENT) && isAssignedToMe(assignee)) {
-      const issueId = data.issue.key;
       const { issueType, summary, descriptionText } = getIssueInformation(data);
       const description = typeof descriptionText === "string" ? descriptionText : JSON.stringify(descriptionText || "");
 
@@ -97,6 +99,12 @@ export const jiraWebhookHandler = async (req, res) => {
       ].join("\n");
 
       const existing = await getInstructionByIssueId({ issueId });
+
+      if (existing && existing.status === "pending") {
+        await updateInstructionText({ instructionId: existing.id, instructions: instructionText });
+        return res.status(200).json({ success: true, updated: true });
+      }
+
       if (existing && existing.status === "failed") {
         await resetFailedInstructionToPending({ instructionId: existing.id, instructions: instructionText });
         return res.status(200).json({ success: true, reset: true });
@@ -107,13 +115,37 @@ export const jiraWebhookHandler = async (req, res) => {
         return res.status(200).json({ success: true, created: true });
       }
     }
+
+    if (eventType === JiraConstants.COMMENT_CREATED_EVENT && isAssignedToMe(assignee)) {
+      const { commentBody } = getCommentInformation(data);
+      const commentText = typeof commentBody === "string" ? commentBody : JSON.stringify(commentBody || "");
+
+      const instructionText = [
+        `A new comment has been posted on Jira issue: ${issueId}`,
+        `Comment: ${commentText}`,
+        "",
+        "Analyze this comment and perform the requested work. If changes are needed, update the code and the PR. Post a comment back to Jira if feedback or clarification is needed."
+      ].join("\n");
+
+      const existing = await getInstructionByIssueId({ issueId });
+
+      if (existing && existing.status === "pending") {
+        const updatedText = existing.instructions + "\n\nUpdate from Jira Comment:\n" + commentText;
+        await updateInstructionText({ instructionId: existing.id, instructions: updatedText });
+        return res.status(200).json({ success: true, updated: true });
+      }
+
+      await createInstructionFromJiraAssignment({ 
+        issueId, 
+        issueType: data.issue?.fields?.issuetype?.name, 
+        summary: data.issue?.fields?.summary, 
+        description: instructionText, 
+        source: "jira-comment" 
+      });
+      return res.status(200).json({ success: true, created: true });
+    }
+
     return res.status(200).json({ success: true, ignored: true });
-  } catch (error) {
-    console.error("Jira Webhook Error:", error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-rn res.status(200).json({ success: true, ignored: true });
   } catch (error) {
     console.error("Jira Webhook Error:", error);
     return res.status(500).json({ success: false, message: error.message });
