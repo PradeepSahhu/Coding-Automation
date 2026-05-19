@@ -16,6 +16,8 @@ The **Coding Automation** project is an autonomous system designed to handle Jir
 - **Infrastructure:** Docker Compose (for DB), ngrok (for local webhook exposure)
 
 ### Architecture
+For a detailed step-by-step walkthrough of how the system processes tasks, refer to [Design/system_workflow.md](Design/system_workflow.md).
+
 1.  **Ingestion:** Jira webhooks notify the Backend when an issue is assigned to the configured Agent account.
 2.  **Instruction Queue:** The Backend creates an entry in the `agent_instructions` table in PostgreSQL.
 3.  **Worker:** A background `agentWorker` listens for Postgres notifications, claims pending instructions, and triggers the AI agent.
