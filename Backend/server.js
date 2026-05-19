@@ -112,6 +112,14 @@ function shouldCreateInstructionFromJira(payload) {
   return false;
 }
 
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Coding Automation Backend is healthy",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.post("/github-webhook", express.raw({ type: "*/*" }), async (req, res) => {
   try {
     const signature = req.headers["x-hub-signature-256"];
