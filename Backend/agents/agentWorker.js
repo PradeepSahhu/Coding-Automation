@@ -70,8 +70,19 @@ async function processInstructionRow(row) {
       });
 
       if (!agentResult.pullRequests?.length) {
+        const diagnostics = agentResult.diagnostics || {};
+        const diagSummary = {
+          prToolCalled: diagnostics.prToolCalled || false,
+          prToolCallCount: diagnostics.prToolCallCount || 0,
+          prToolMessageCount: diagnostics.prToolMessageCount || 0,
+          prToolErrors: Array.isArray(diagnostics.prToolErrors)
+            ? diagnostics.prToolErrors.slice(-2)
+            : [],
+          lastAssistantResponse: diagnostics.lastAssistantResponse || null,
+        };
+
         throw new Error(
-          `Instruction ${row.id} did not create any PR. Record will remain incomplete.`,
+          `Instruction ${row.id} did not create any PR. Diagnostics: ${JSON.stringify(diagSummary)}`,
         );
       }
 
@@ -183,8 +194,13 @@ export async function startAgentWorker() {
   await listener.query(`LISTEN ${NOTIFY_CHANNEL}`);
   await pumpPendingInstructions();
 
+  setInterval(async () => {
+    console.log("Polling database for pending instructions...");
+    await pumpPendingInstructions();
+  }, POLLING_INTERVAL_MS);
+
   console.log(
-    `Agent worker listening on Postgres channel '${NOTIFY_CHANNEL}' with max concurrency ${MAX_CONCURRENT_WORKERS}`,
+    `Agent worker listening on Postgres channel '${NOTIFY_CHANNEL}' and polling every ${POLLING_INTERVAL_MS / 1000}s with max concurrency ${MAX_CONCURRENT_WORKERS}`,
   );
 }
 

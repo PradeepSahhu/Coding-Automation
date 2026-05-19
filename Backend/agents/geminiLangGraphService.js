@@ -5,37 +5,135 @@ import { HumanMessage } from "@langchain/core/messages";
 import { getInstructionFromDb } from "../Repository/instructionRepository.js";
 import { createPullRequestTool } from "./Tools/githubTools.js";
 
-function parsePrToolOutput(rawContent) {
+function normalizeContentToText(rawContent) {
   if (!rawContent) {
-    return null;
+    return "";
   }
 
   if (typeof rawContent === "string") {
-    try {
-      return JSON.parse(rawContent);
-    } catch {
-      return null;
-    }
+    return rawContent;
   }
 
   if (Array.isArray(rawContent)) {
-    const textParts = rawContent
-      .map((part) => (typeof part?.text === "string" ? part.text : null))
+    return rawContent
+      .map((part) => {
+        if (typeof part === "string") {
+          return part;
+        }
+
+        if (typeof part?.text === "string") {
+          return part.text;
+        }
+
+        return "";
+      })
       .filter(Boolean)
       .join("\n");
+  }
 
-    if (!textParts) {
-      return null;
-    }
+  if (typeof rawContent === "object") {
+    return JSON.stringify(rawContent);
+  }
 
+  return `${rawContent}`;
+}
+
+function tryParseJsonString(text) {
+  if (!text) {
+    return null;
+  }
+
+  const trimmed = text.trim();
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    // Continue with fallbacks.
+  }
+
+  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fencedMatch?.[1]) {
     try {
-      return JSON.parse(textParts);
+      return JSON.parse(fencedMatch[1].trim());
+    } catch {
+      // Continue with next fallback.
+    }
+  }
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    const jsonLike = trimmed.slice(firstBrace, lastBrace + 1);
+    try {
+      return JSON.parse(jsonLike);
     } catch {
       return null;
     }
   }
 
   return null;
+}
+
+function parsePrToolOutput(rawContent) {
+  if (!rawContent) {
+    return null;
+  }
+
+  if (
+    typeof rawContent === "object" &&
+    !Array.isArray(rawContent) &&
+    rawContent?.owner &&
+    rawContent?.repo &&
+    rawContent?.number
+  ) {
+    return rawContent;
+  }
+
+  return tryParseJsonString(normalizeContentToText(rawContent));
+}
+
+function extractPullRequestDiagnostics(messages = []) {
+  const diagnostics = {
+    prToolCalled: false,
+    prToolCallCount: 0,
+    prToolMessageCount: 0,
+    prToolErrors: [],
+    lastAssistantResponse: null,
+  };
+
+  for (const message of messages) {
+    const type = `${message?.type || ""}`.toLowerCase();
+
+    if (type === "ai") {
+      const toolCalls = Array.isArray(message?.tool_calls)
+        ? message.tool_calls
+        : [];
+      const prCalls = toolCalls.filter(
+        (call) => call?.name === "create_github_pull_request",
+      );
+
+      if (prCalls.length > 0) {
+        diagnostics.prToolCalled = true;
+        diagnostics.prToolCallCount += prCalls.length;
+      }
+
+      diagnostics.lastAssistantResponse = normalizeContentToText(
+        message?.content,
+      );
+    }
+
+    if (message?.name === "create_github_pull_request") {
+      diagnostics.prToolMessageCount += 1;
+      const contentText = normalizeContentToText(message?.content).trim();
+      const parsed = parsePrToolOutput(message?.content);
+
+      if (!parsed?.owner || !parsed?.repo || !parsed?.number) {
+        diagnostics.prToolErrors.push(contentText || "Tool output was empty");
+      }
+    }
+  }
+
+  return diagnostics;
 }
 
 function extractPullRequests(messages = []) {
@@ -106,6 +204,33 @@ function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
     .trim();
 }
 
+export async function validateGeminiModelConfiguration() {
+  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-pro";
+  const apiKey = process.env.GOOGLE_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("GOOGLE_API_KEY is missing. Set it in Backend/.env");
+  }
+
+  const model = new ChatGoogleGenerativeAI({
+    model: modelName,
+    apiKey,
+    temperature: 0,
+  });
+
+  try {
+    // A minimal call verifies both model identifier and API key at startup.
+    await model.invoke("Reply with exactly: OK");
+  } catch (error) {
+    const details = error?.message || String(error);
+    throw new Error(
+      `Gemini validation failed for model '${modelName}'. ${details}`,
+    );
+  }
+
+  return { modelName };
+}
+
 export async function runGeminiLangGraphAgent({
   instructionId,
   userRequest,
@@ -144,10 +269,12 @@ export async function runGeminiLangGraphAgent({
       : JSON.stringify(lastMessage?.content ?? "", null, 2);
 
   const pullRequests = extractPullRequests(result.messages);
+  const diagnostics = extractPullRequestDiagnostics(result.messages);
 
   return {
     instructionId: instructionRow.id,
     response: responseText,
     pullRequests,
+    diagnostics,
   };
 }

@@ -8,6 +8,7 @@ import {
   handlePullRequestMerged,
   startAgentWorker,
 } from "./agents/agentWorker.js";
+import { validateGeminiModelConfiguration } from "./agents/geminiLangGraphService.js";
 import {
   createInstructionFromJiraAssignment,
   getInstructionByIssueId,
@@ -294,7 +295,7 @@ app.post("/jira-webhook", express.json(), async (req, res) => {
     const existingIssue = await getInstructionByIssueId({ issueId });
 
     // Already actively being processed — skip to avoid duplicate work
-    if (existingIssue) {
+    if (existingIssue && existingIssue.status !== "failed") {
       console.log(
         `Instruction for ${issueId} already active with status '${existingIssue.status}', skipping`,
       );
@@ -352,7 +353,17 @@ app.post("/jira-webhook", express.json(), async (req, res) => {
 });
 
 async function bootstrap() {
+  const { modelName } = await validateGeminiModelConfiguration();
+  console.log(`Gemini model '${modelName}' validated successfully`);
+
+  // Note: startAgentWorker() starts long-running LISTEN/NOTIFY and polling.
+  // In a Vercel Serverless environment, this will only run while a request is active.
   await startAgentWorker();
+
+  if (process.env.VERCEL) {
+    console.log("Running in Vercel environment, skipping app.listen");
+    return;
+  }
 
   app.listen(3000, () => {
     console.log("Running on port 3000");
@@ -361,5 +372,9 @@ async function bootstrap() {
 
 bootstrap().catch((error) => {
   console.error("Failed to start backend:", error);
-  process.exit(1);
+  if (!process.env.VERCEL) {
+    process.exit(1);
+  }
 });
+
+export default app;
