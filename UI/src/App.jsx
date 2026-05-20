@@ -30,11 +30,11 @@ function App() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return '#28a745'
-      case 'failed': return '#dc3545'
-      case 'in_progress': return '#ffc107'
-      case 'pending': return '#17a2b8'
-      default: return '#6c757d'
+      case 'completed': return '#10b981'
+      case 'failed': return '#ef4444'
+      case 'in_progress': return '#f59e0b'
+      case 'pending': return '#3b82f6'
+      default: return '#64748b'
     }
   }
 

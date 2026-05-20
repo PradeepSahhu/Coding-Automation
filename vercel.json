@@ -2,15 +2,39 @@
   "version": 2,
   "builds": [
     {
+      "src": "UI/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
       "src": "Backend/server.js",
       "use": "@vercel/node",
-      "config": { "includeFiles": ["Backend/**"] }
+      "config": {
+        "includeFiles": ["Backend/**"]
+      }
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "Backend/server.js"
+    },
+    {
+      "src": "/github-webhook",
+      "dest": "Backend/server.js"
+    },
+    {
+      "src": "/jira-webhook",
+      "dest": "Backend/server.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
