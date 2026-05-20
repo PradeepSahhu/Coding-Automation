@@ -36,6 +36,8 @@ export const getTasks = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+/**
+ * Simple health check endpoint to verify that the backend server is running.
  * Returns the current timestamp and a success message.
  */
 export const healthCheck = (req, res) => {
