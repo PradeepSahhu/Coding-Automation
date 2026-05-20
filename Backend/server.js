@@ -3,8 +3,14 @@ import "dotenv/config";
 import { startAgentWorker } from "./agents/agentWorker.js";
 import { validateGeminiModelConfiguration } from "./agents/geminiLangGraphService.js";
 import { verifyGitHubSignature } from "./Middleware/authMiddleware.js";
-import { githubWebhookHandler, jiraWebhookHandler } from "./Controllers/webhookController.js";
-import { getInstructions, healthCheck } from "./Controllers/instructionController.js";
+import {
+  githubWebhookHandler,
+  jiraWebhookHandler,
+} from "./Controllers/webhookController.js";
+import {
+  getInstructions,
+  healthCheck,
+} from "./Controllers/instructionController.js";
 
 const app = express();
 
@@ -12,7 +18,12 @@ const app = express();
 app.get("/", healthCheck);
 
 // Webhook Routes
-app.post("/github-webhook", express.raw({ type: "*/*" }), verifyGitHubSignature, githubWebhookHandler);
+app.post(
+  "/github-webhook",
+  express.raw({ type: "*/*" }),
+  verifyGitHubSignature,
+  githubWebhookHandler,
+);
 app.post("/jira-webhook", express.json(), jiraWebhookHandler);
 
 // API Routes
