@@ -3,28 +3,35 @@ import './App.css'
 
 function App() {
   const [instructions, setInstructions] = useState([])
+  const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchInstructions = async () => {
+  const BACKEND_URL = 'https://coding-automation.vercel.app';
+
+  const fetchData = async () => {
     try {
-      const response = await fetch('/api/instructions')
-      const data = await response.json()
-      if (data.success) {
-        setInstructions(data.instructions)
-      } else {
-        setError(data.message)
-      }
+      const [instRes, logRes] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/instructions`),
+        fetch(`${BACKEND_URL}/api/logs`)
+      ])
+      
+      const instData = await instRes.json()
+      const logData = await logRes.json()
+
+      if (instData.success) setInstructions(instData.instructions)
+      if (logData.success) setLogs(logData.logs)
+      
     } catch (err) {
-      setError('Failed to fetch instructions')
+      setError('Failed to fetch data')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchInstructions()
-    const interval = setInterval(fetchInstructions, 10000)
+    fetchData()
+    const interval = setInterval(fetchData, 5000)
     return () => clearInterval(interval)
   }, [])
 
@@ -42,13 +49,15 @@ function App() {
     <div className="container">
       <header>
         <h1>Coding Automation Dashboard</h1>
-        <button onClick={fetchInstructions} className="refresh-btn">Refresh</button>
+        <button onClick={fetchData} className="refresh-btn">Refresh</button>
       </header>
 
-      {loading && <p>Loading instructions...</p>}
+      {loading && instructions.length === 0 && <p>Loading...</p>}
       {error && <p className="error">Error: {error}</p>}
 
-      {!loading && !error && (
+      <section>
+        <h2>Instructions</h2>
+        {!loading && instructions.length === 0 && <p>No instructions found.</p>}
         <div className="grid">
           {instructions.map((item) => (
             <div key={item.id} className="card">
@@ -85,7 +94,22 @@ function App() {
             </div>
           ))}
         </div>
-      )}
+      </section>
+
+      <section className="logs-section">
+        <h2>Backend Logs</h2>
+        <div className="logs-container">
+          {logs.length === 0 && <p>No logs available.</p>}
+          {logs.map((log) => (
+            <div key={log.id} className={`log-entry ${log.level}`}>
+              <span className="log-time">{new Date(log.timestamp).toLocaleTimeString()}</span>
+              <span className="log-level">{log.level.toUpperCase()}</span>
+              <span className="log-msg">{log.message}</span>
+              {log.context && <pre className="log-ctx">{JSON.stringify(log.context)}</pre>}
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

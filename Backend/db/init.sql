@@ -53,6 +53,25 @@ AFTER INSERT ON agent_instructions
 FOR EACH ROW
 EXECUTE FUNCTION notify_agent_instruction();
 
-INSERT INTO agent_instructions (issue_id, instructions)
-SELECT 'BOOT-1', 'Default instruction: analyze the request and respond concisely.'
-WHERE NOT EXISTS (SELECT 1 FROM agent_instructions);
+CREATE TABLE IF NOT EXISTS logs (
+  id SERIAL PRIMARY KEY,
+  level VARCHAR(10) NOT NULL DEFAULT 'info',
+  message TEXT NOT NULL,
+  context JSONB,
+  timestamp TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs (timestamp DESC);
+
+CREATE OR REPLACE FUNCTION notify_log_created() RETURNS trigger AS $$
+BEGIN
+  PERFORM pg_notify('log_created', NEW.id::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_notify_log_created ON logs;
+CREATE TRIGGER trg_notify_log_created
+AFTER INSERT ON logs
+FOR EACH ROW
+EXECUTE FUNCTION notify_log_created();

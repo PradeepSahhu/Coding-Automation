@@ -1,4 +1,5 @@
 import fs from "fs";
+import { logger } from "../Utility/Logger.js";
 import { 
   handlePullRequestChangesRequested, 
   handlePullRequestClosedWithoutMerge, 
@@ -22,6 +23,8 @@ export const githubWebhookHandler = async (req, res) => {
   try {
     const event = req.headers["x-github-event"];
     const { payload } = parseGitHubWebhookBody(req.body);
+
+    logger.info(`Received GitHub Webhook: ${event}`, { action: payload?.action });
 
     if (event === "ping") {
       return res.status(200).json({ success: true, message: "Ping received", zen: payload?.zen });
@@ -81,6 +84,8 @@ export const jiraWebhookHandler = async (req, res) => {
     const data = req.body;
     const eventType = data.webhookEvent;
     const assignee = data.issue?.fields?.assignee;
+
+    logger.info(`Received Jira Webhook: ${eventType}`, { issue: data.issue?.key });
 
     await fs.promises.appendFile("webhook-data.json", JSON.stringify(data, null, 2));
 

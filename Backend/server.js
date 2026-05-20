@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import "dotenv/config";
 import { startAgentWorker } from "./agents/agentWorker.js";
 import { validateGeminiModelConfiguration } from "./agents/geminiLangGraphService.js";
@@ -9,10 +10,15 @@ import {
 } from "./Controllers/webhookController.js";
 import {
   getInstructions,
+  getLogs,
   healthCheck,
 } from "./Controllers/instructionController.js";
 
 const app = express();
+
+app.use(cors({
+  origin: 'https://coding-automation-5g8h.vercel.app'
+}));
 
 // Health Check
 app.get("/", healthCheck);
@@ -28,6 +34,7 @@ app.post("/jira-webhook", express.json(), jiraWebhookHandler);
 
 // API Routes
 app.get("/api/instructions", getInstructions);
+app.get("/api/logs", getLogs);
 
 async function bootstrap() {
   const { modelName } = await validateGeminiModelConfiguration();

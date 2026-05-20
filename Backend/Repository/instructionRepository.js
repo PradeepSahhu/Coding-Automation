@@ -18,7 +18,7 @@ const dbConfig = process.env.DATABASE_URL
       password: process.env.POSTGRES_PASSWORD || "agentpass",
     };
 
-const pool = new Pool(dbConfig);
+export const pool = new Pool(dbConfig);
 
 function getSafeTableName(tableName = DEFAULT_TABLE_NAME) {
   const safeName = `${tableName}`.replace(/[^a-zA-Z0-9_]/g, "");
