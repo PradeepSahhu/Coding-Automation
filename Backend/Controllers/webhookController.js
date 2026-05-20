@@ -84,15 +84,23 @@ export const jiraWebhookHandler = async (req, res) => {
     const data = req.body;
     const eventType = data.webhookEvent;
     const assignee = data.issue?.fields?.assignee;
+    const processAll = process.env.PROCESS_ALL_JIRA_ISSUES === "true";
 
-    logger.info(`Received Jira Webhook: ${eventType}`, { issue: data.issue?.key });
+    logger.info(`Received Jira Webhook: ${eventType}`, { 
+      issue: data.issue?.key, 
+      assignee: assignee?.displayName,
+      processAll 
+    });
 
     await fs.promises.appendFile("webhook-data.json", JSON.stringify(data, null, 2));
 
     const issueId = data.issue?.key;
     if (!issueId) return res.status(200).json({ success: true, ignored: true });
 
-    if ((eventType === JiraConstants.CREATED_EVENT || eventType === JiraConstants.UPDATED_EVENT) && isAssignedToMe(assignee)) {
+    const isAssigned = isAssignedToMe(assignee);
+    const shouldProcess = isAssigned || processAll;
+
+    if ((eventType === JiraConstants.CREATED_EVENT || eventType === JiraConstants.UPDATED_EVENT) && shouldProcess) {
       const { issueType, summary, descriptionText } = getIssueInformation(data);
       const description = typeof descriptionText === "string" ? descriptionText : JSON.stringify(descriptionText || "");
 
@@ -121,7 +129,7 @@ export const jiraWebhookHandler = async (req, res) => {
       }
     }
 
-    if (eventType === JiraConstants.COMMENT_CREATED_EVENT && isAssignedToMe(assignee)) {
+    if (eventType === JiraConstants.COMMENT_CREATED_EVENT && shouldProcess) {
       const { commentBody } = getCommentInformation(data);
       const commentText = typeof commentBody === "string" ? commentBody : JSON.stringify(commentBody || "");
 
