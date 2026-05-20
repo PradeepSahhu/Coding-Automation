@@ -3,6 +3,7 @@ import { getAllInstructions, pool } from "../Repository/instructionRepository.js
 export const getInstructions = async (req, res) => {
   try {
     const instructions = await getAllInstructions();
+    console.log(`Fetched ${instructions.length} instructions`);
     return res.status(200).json({ success: true, instructions });
   } catch (error) {
     console.error("Error fetching instructions:", error);

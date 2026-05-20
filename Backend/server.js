@@ -18,7 +18,7 @@ import {
 const app = express();
 
 app.use(cors({
-  origin: 'https://coding-automation-5g8h.vercel.app'
+  origin: '*'
 }));
 
 // Health Check

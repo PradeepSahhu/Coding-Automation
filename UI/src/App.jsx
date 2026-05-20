@@ -16,6 +16,13 @@ function App() {
         fetch(`${BACKEND_URL}/api/logs`)
       ])
       
+      if (!instRes.ok) {
+        throw new Error(`Backend returned ${instRes.status} for instructions`)
+      }
+      if (!logRes.ok) {
+        throw new Error(`Backend returned ${logRes.status} for logs`)
+      }
+
       const instData = await instRes.json()
       const logData = await logRes.json()
 
@@ -23,7 +30,8 @@ function App() {
       if (logData.success) setLogs(logData.logs)
       
     } catch (err) {
-      setError('Failed to fetch data')
+      console.error('Fetch error:', err)
+      setError(`Failed to fetch data: ${err.message}`)
     } finally {
       setLoading(false)
     }
