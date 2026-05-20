@@ -11,6 +11,7 @@ import {
 import {
   getInstructions,
   getLogs,
+  getTasks,
   healthCheck,
 } from "./Controllers/instructionController.js";
 
@@ -35,6 +36,7 @@ app.post("/jira-webhook", express.json(), jiraWebhookHandler);
 // API Routes
 app.get("/api/instructions", getInstructions);
 app.get("/api/logs", getLogs);
+app.get("/api/tasks", getTasks);
 
 async function bootstrap() {
   const { modelName } = await validateGeminiModelConfiguration();

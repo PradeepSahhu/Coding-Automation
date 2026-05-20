@@ -21,8 +21,21 @@ export const getLogs = async (req, res) => {
   }
 };
 
-/**
- * Simple health check endpoint to verify that the backend server is running.
+export const getTasks = async (req, res) => {
+  try {
+    const query = `
+      SELECT id, issue_id, status 
+      FROM agent_instructions 
+      WHERE status IN ('in_progress', 'completed')
+      ORDER BY created_at DESC
+    `;
+    const result = await pool.query(query);
+    return res.status(200).json({ success: true, tasks: result.rows });
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
  * Returns the current timestamp and a success message.
  */
 export const healthCheck = (req, res) => {
