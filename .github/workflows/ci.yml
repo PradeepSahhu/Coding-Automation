@@ -19,6 +19,11 @@ jobs:
         run: |
           cd Backend
           npm install
+      - name: Run DB Migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -f Backend/db/init.sql
       - name: Syntax Check (node --check)
         run: |
           find Backend -name "*.js" -not -path "*/node_modules/*" -exec node --check {} +

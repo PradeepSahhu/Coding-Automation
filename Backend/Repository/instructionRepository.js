@@ -3,13 +3,20 @@ import { Client, Pool } from "pg";
 const DEFAULT_TABLE_NAME =
   process.env.AGENT_INSTRUCTIONS_TABLE || "agent_instructions";
 
-const dbConfig = {
-  host: process.env.POSTGRES_HOST || "localhost",
-  port: Number(process.env.POSTGRES_PORT || 5432),
-  database: process.env.POSTGRES_DB || "agentdb",
-  user: process.env.POSTGRES_USER || "agentuser",
-  password: process.env.POSTGRES_PASSWORD || "agentpass",
-};
+const dbConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL.includes("sslmode=require")
+        ? { rejectUnauthorized: false }
+        : false,
+    }
+  : {
+      host: process.env.POSTGRES_HOST || "localhost",
+      port: Number(process.env.POSTGRES_PORT || 5432),
+      database: process.env.POSTGRES_DB || "agentdb",
+      user: process.env.POSTGRES_USER || "agentuser",
+      password: process.env.POSTGRES_PASSWORD || "agentpass",
+    };
 
 const pool = new Pool(dbConfig);
 
