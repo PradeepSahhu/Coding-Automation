@@ -208,7 +208,7 @@ function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
 }
 
 export async function validateGeminiModelConfiguration() {
-  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-pro";
+  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
   const apiKey = process.env.GOOGLE_API_KEY;
 
   if (!apiKey) {
@@ -242,7 +242,7 @@ export async function runGeminiLangGraphAgent({
   const instructionRow = await getInstructionFromDb({ instructionId });
 
   const model = new ChatGoogleGenerativeAI({
-    model: process.env.GEMINI_MODEL || "gemini-1.5-pro",
+    model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
     apiKey: process.env.GOOGLE_API_KEY,
     temperature: 0,
   });
