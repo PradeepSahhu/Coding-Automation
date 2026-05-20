@@ -5,10 +5,12 @@ const DEFAULT_TABLE_NAME =
 
 const dbConfig = process.env.DATABASE_URL
   ? {
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.DATABASE_URL.includes("sslmode=require")
-        ? { rejectUnauthorized: false }
-        : false,
+      connectionString: process.env.DATABASE_URL.includes("uselibpqcompat") 
+        ? process.env.DATABASE_URL 
+        : `${process.env.DATABASE_URL}${process.env.DATABASE_URL.includes("?") ? "&" : "?"}uselibpqcompat=true`,
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }
   : {
       host: process.env.POSTGRES_HOST || "localhost",
