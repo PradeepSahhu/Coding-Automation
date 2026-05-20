@@ -1,0 +1,41 @@
+name: CI & Deployment Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Dependencies
+        run: |
+          cd Backend
+          npm install
+      - name: Syntax Check (node --check)
+        run: |
+          find Backend -name "*.js" -not -path "*/node_modules/*" -exec node --check {} +
+
+  frontend-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Dependencies
+        run: |
+          cd UI
+          npm install
+      - name: Build UI (Validation)
+        run: |
+          cd UI
+          npm run build
