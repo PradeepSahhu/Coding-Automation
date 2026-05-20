@@ -380,6 +380,14 @@ export async function insertInstructionIntoDeadLetterQueue({
 
   await pool.query(createTableQuery);
 
+  const result = await pool.query(insertQuery, [
+    instructionId,
+    issueId,
+    instructions,
+    errorMessage,
+    attempts,
+  ]);
+
   return result.rows?.[0] || null;
 }
 

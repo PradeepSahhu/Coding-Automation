@@ -27,7 +27,7 @@ app.get("/", healthCheck);
 // Webhook Routes
 app.post(
   "/github-webhook",
-  express.raw({ type: "*/*" }),
+  express.raw({ type: "application/octet-stream" }),
   verifyGitHubSignature,
   githubWebhookHandler,
 );
