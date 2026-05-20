@@ -1,4 +1,3 @@
-import fs from "fs";
 import { logger } from "../Utility/Logger.js";
 import { 
   handlePullRequestChangesRequested, 
@@ -91,8 +90,6 @@ export const jiraWebhookHandler = async (req, res) => {
       assignee: assignee?.displayName,
       processAll 
     });
-
-    await fs.promises.appendFile("webhook-data.json", JSON.stringify(data, null, 2));
 
     const issueId = data.issue?.key;
     if (!issueId) return res.status(200).json({ success: true, ignored: true });
