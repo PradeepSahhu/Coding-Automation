@@ -21,5 +21,3 @@ export const healthCheck = (req, res) => {
     timestamp: new Date().toISOString(),
   });
 };
-  });
-};

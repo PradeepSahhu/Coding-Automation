@@ -343,6 +343,3 @@ export function createPullRequestTool() {
     },
   );
 }
- },
-  );
-}

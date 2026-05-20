@@ -47,5 +47,3 @@ export function isAssignedToMe(assignee) {
   const targetAccountId = process.env.JIRA_ASSIGNEE_ACCOUNT_ID;
   return targetAccountId && identity.accountId === targetAccountId;
 }
-ntId;
-}
