@@ -9,7 +9,7 @@ import { getInstructions, healthCheck } from "./Controllers/instructionControlle
 const app = express();
 
 // Health Check
-app.get("/api/health", healthCheck);
+app.get("/", healthCheck);
 
 // Webhook Routes
 app.post("/github-webhook", express.raw({ type: "*/*" }), verifyGitHubSignature, githubWebhookHandler);
