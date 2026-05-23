@@ -99,17 +99,35 @@ h1 {
 }
 
 .pr-link {
-  display: inline-block;
-  margin-top: 0.5rem;
-  color: #3b82f6;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #38bdf8;
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.2s;
+  font-size: 0.85rem;
+  transition: all 0.2s ease-in-out;
 }
 
 .pr-link:hover {
-  color: #60a5fa;
-  text-decoration: underline;
+  background-color: #0f172a;
+  border-color: #38bdf8;
+  color: #0ea5e9;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  transform: translateY(-1px);
+}
+
+.github-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.pr-link:hover .github-icon {
+  transform: rotate(-10deg) scale(1.1);
 }
 
 .error-box {
