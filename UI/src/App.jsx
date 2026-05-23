@@ -47,6 +47,7 @@ function App() {
     switch (status) {
       case 'completed': return '#10b981'
       case 'failed': return '#ef4444'
+      case 'failed_pr': return '#f43f5e'
       case 'in_progress': return '#f59e0b'
       case 'in_review': return '#8b5cf6'
       case 'pending': return '#3b82f6'
@@ -76,7 +77,7 @@ function App() {
                   className="status-badge" 
                   style={{ backgroundColor: getStatusColor(item.status) }}
                 >
-                  {item.status.replace('_', ' ')}
+                  {item.status === 'failed_pr' ? 'PR Failed' : item.status.replace('_', ' ')}
                 </span>
               </div>
               <div className="card-body">

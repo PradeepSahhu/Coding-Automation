@@ -115,7 +115,7 @@ export const jiraWebhookHandler = async (req, res) => {
         return res.status(200).json({ success: true, updated: true });
       }
 
-      if (existing && existing.status === "failed") {
+      if (existing && (existing.status === "failed" || existing.status === "failed_pr")) {
         await resetFailedInstructionToPending({ instructionId: existing.id, instructions: instructionText });
         return res.status(200).json({ success: true, reset: true });
       }

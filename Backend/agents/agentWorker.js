@@ -56,6 +56,7 @@ function sleep(ms) {
 
 async function processInstructionRow(row) {
   let lastError = null;
+  let isPrFailure = false;
 
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt += 1) {
     try {
@@ -77,19 +78,17 @@ async function processInstructionRow(row) {
 
       if (!agentResult.pullRequests?.length) {
         const diagnostics = agentResult.diagnostics || {};
-        const diagSummary = {
-          prToolCalled: diagnostics.prToolCalled || false,
-          prToolCallCount: diagnostics.prToolCallCount || 0,
-          prToolMessageCount: diagnostics.prToolMessageCount || 0,
-          prToolErrors: Array.isArray(diagnostics.prToolErrors)
-            ? diagnostics.prToolErrors.slice(-2)
-            : [],
-          lastAssistantResponse: diagnostics.lastAssistantResponse || null,
-        };
+        isPrFailure = true;
 
-        throw new Error(
-          `Instruction ${row.id} did not create any PR. Diagnostics: ${JSON.stringify(diagSummary)}`,
-        );
+        let conciseReason = "The agent completed but did not call the pull request tool.";
+        if (Array.isArray(diagnostics.prToolErrors) && diagnostics.prToolErrors.length > 0) {
+          const rawErr = diagnostics.prToolErrors[diagnostics.prToolErrors.length - 1];
+          conciseReason = `PR Tool Error: ${rawErr.replace(/[\r\n\t]+/g, ' ').slice(0, 150)}`;
+        } else if (diagnostics.prToolCallCount > 0) {
+          conciseReason = "The agent called the PR tool but the arguments were invalid or empty.";
+        }
+
+        throw new Error(conciseReason);
       }
 
       const primaryPr = agentResult.pullRequests[0];
@@ -126,6 +125,7 @@ async function processInstructionRow(row) {
   await markInstructionFailed({
     instructionId: row.id,
     errorMessage: lastError?.message,
+    status: isPrFailure ? "failed_pr" : "failed",
   });
 
   try {

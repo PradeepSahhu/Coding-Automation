@@ -112,18 +112,20 @@ export async function markInstructionCompleted({
 export async function markInstructionFailed({
   instructionId,
   errorMessage,
+  status = 'failed',
   tableName = DEFAULT_TABLE_NAME,
 } = {}) {
   const tableRef = getSafeTableName(tableName);
   const query = `
     UPDATE ${tableRef}
-    SET status = 'failed', last_error = $2
+    SET status = $3, last_error = $2
     WHERE id = $1;
   `;
 
   await pool.query(query, [
     instructionId,
     errorMessage?.slice(0, 4000) || null,
+    status,
   ]);
 }
 
