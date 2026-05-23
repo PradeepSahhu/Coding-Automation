@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS agent_instructions (
   pr_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   completed_at TIMESTAMPTZ,
-  attempts INTEGER DEFAULT 0
+  attempts INTEGER DEFAULT 0,
+  started_at TIMESTAMPTZ,
+  ended_at TIMESTAMPTZ
 );
 
 ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS last_error TEXT;
@@ -19,6 +21,8 @@ ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS pr_repo TEXT;
 ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS pr_number INTEGER;
 ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS pr_url TEXT;
 ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS attempts INTEGER DEFAULT 0;
+ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS started_at TIMESTAMPTZ;
+ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS ended_at TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS idx_agent_instructions_status
 ON agent_instructions (status);
@@ -77,3 +81,16 @@ CREATE TRIGGER trg_notify_log_created
 AFTER INSERT ON logs
 FOR EACH ROW
 EXECUTE FUNCTION notify_log_created();
+
+CREATE TABLE IF NOT EXISTS agent_execution_logs (
+  id SERIAL PRIMARY KEY,
+  instruction_id INTEGER REFERENCES agent_instructions(id) ON DELETE CASCADE,
+  log_line TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_execution_logs_instruction_id
+ON agent_execution_logs (instruction_id);
+
+CREATE INDEX IF NOT EXISTS idx_agent_execution_logs_created_at
+ON agent_execution_logs (created_at ASC);

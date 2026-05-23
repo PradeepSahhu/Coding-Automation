@@ -1,4 +1,4 @@
-import { getAllInstructions, pool } from "../Repository/instructionRepository.js";
+import { getAllInstructions, getAgentExecutionLogs, pool } from "../Repository/instructionRepository.js";
 
 export const getInstructions = async (req, res) => {
   try {
@@ -47,4 +47,15 @@ export const healthCheck = (req, res) => {
     message: "Coding Automation Backend is healthy",
     timestamp: new Date().toISOString(),
   });
+};
+
+export const getInstructionLogs = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const logs = await getAgentExecutionLogs(Number(id));
+    return res.status(200).json({ success: true, logs });
+  } catch (error) {
+    console.error("Error fetching instruction logs:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
 };

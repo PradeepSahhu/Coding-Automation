@@ -13,6 +13,7 @@ import {
   getLogs,
   getTasks,
   healthCheck,
+  getInstructionLogs,
 } from "./Controllers/instructionController.js";
 
 const app = express();
@@ -37,6 +38,7 @@ app.post("/jira-webhook", express.json(), jiraWebhookHandler);
 app.get("/api/instructions", getInstructions);
 app.get("/api/logs", getLogs);
 app.get("/api/tasks", getTasks);
+app.get("/api/instructions/:id/logs", getInstructionLogs);
 
 async function bootstrap() {
   const { modelName } = await validateGeminiModelConfiguration();

@@ -74,7 +74,7 @@ export async function claimNextPendingInstruction({
       LIMIT 1
     )
     UPDATE ${tableRef} AS t
-    SET status = 'in_progress', attempts = COALESCE(t.attempts, 0) + 1
+    SET status = 'in_progress', attempts = COALESCE(t.attempts, 0) + 1, started_at = NOW(), ended_at = NULL
     FROM next_job
     WHERE t.id = next_job.id
     RETURNING t.id, t.issue_id, t.instructions, t.attempts;
@@ -118,7 +118,7 @@ export async function markInstructionFailed({
   const tableRef = getSafeTableName(tableName);
   const query = `
     UPDATE ${tableRef}
-    SET status = $3, last_error = $2
+    SET status = $3, last_error = $2, ended_at = NOW()
     WHERE id = $1;
   `;
 
@@ -140,7 +140,7 @@ export async function saveInstructionPullRequest({
   const tableRef = getSafeTableName(tableName);
   const query = `
     UPDATE ${tableRef}
-    SET pr_owner = $2, pr_repo = $3, pr_number = $4, pr_url = $5, status = 'in_review', last_error = NULL
+    SET pr_owner = $2, pr_repo = $3, pr_number = $4, pr_url = $5, status = 'in_review', last_error = NULL, ended_at = NOW()
     WHERE id = $1;
   `;
 
@@ -401,11 +401,22 @@ export async function getAllInstructions({
 } = {}) {
   const tableRef = getSafeTableName(tableName);
   const query = `
-    SELECT id, issue_id, instructions, status, last_error, pr_owner, pr_repo, pr_number, pr_url, created_at, completed_at
+    SELECT id, issue_id, instructions, status, last_error, pr_owner, pr_repo, pr_number, pr_url, created_at, completed_at, started_at, ended_at
     FROM ${tableRef}
     ORDER BY created_at DESC;
   `;
 
   const result = await pool.query(query);
+  return result.rows;
+}
+
+export async function getAgentExecutionLogs(instructionId) {
+  const query = `
+    SELECT log_line, created_at
+    FROM agent_execution_logs
+    WHERE instruction_id = $1
+    ORDER BY created_at ASC;
+  `;
+  const result = await pool.query(query, [instructionId]);
   return result.rows;
 }

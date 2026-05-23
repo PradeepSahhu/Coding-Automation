@@ -1,4 +1,5 @@
 import { runGeminiLangGraphAgent } from "./geminiLangGraphService.js";
+import { logStorage } from "../Utility/Logger.js";
 import {
   claimNextPendingInstruction,
   createFollowUpInstructionFromPullRequestFeedback,
@@ -150,9 +151,13 @@ function spawnWorker(row) {
   if (row.attempts > 1) {
     console.log(`Retrying previously failed instruction ${row.id} (attempt ${row.attempts})`);
   }
-  const task = processInstructionRow(row).finally(() => {
-    activeWorkers.delete(task);
-    void pumpPendingInstructions();
+  
+  let task;
+  logStorage.run({ instructionId: row.id }, () => {
+    task = processInstructionRow(row).finally(() => {
+      activeWorkers.delete(task);
+      void pumpPendingInstructions();
+    });
   });
 
   activeWorkers.add(task);
