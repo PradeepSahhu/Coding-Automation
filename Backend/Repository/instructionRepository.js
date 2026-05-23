@@ -138,7 +138,7 @@ export async function saveInstructionPullRequest({
   const tableRef = getSafeTableName(tableName);
   const query = `
     UPDATE ${tableRef}
-    SET pr_owner = $2, pr_repo = $3, pr_number = $4, pr_url = $5, last_error = NULL
+    SET pr_owner = $2, pr_repo = $3, pr_number = $4, pr_url = $5, status = 'in_review', last_error = NULL
     WHERE id = $1;
   `;
 

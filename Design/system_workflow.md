@@ -26,7 +26,7 @@ This document details the step-by-step process of how the Coding Automation syst
   - It uses the `githubTools` to create a new branch.
   - **Robust Committing:** The system uses a retry mechanism (exponential backoff) when committing files to GitHub to handle transient API errors or race conditions.
   - It commits the changes and pushes the branch to GitHub.
-  - Finally, it opens a Pull Request (PR) or reuses an existing open one, then saves the PR URL back to the database.
+  - Finally, it opens a Pull Request (PR) or reuses an existing open one, saves the PR URL, and transitions the status to `in_review` in the database.
 
 ## 4. Feedback & Iteration (Webhook Triggers)
 - **GitHub PR Reviews:** If a human reviewer requests changes on GitHub, the system creates a follow-up instruction for the agent.
@@ -41,7 +41,7 @@ This document details the step-by-step process of how the Coding Automation syst
 
 ## 6. Monitoring (React Dashboard)
 - **Data Fetch:** The React UI polls the `/api/instructions` endpoint every 10 seconds.
-- **Visualization:** Users can monitor the real-time status (Pending, In Progress, Completed, Failed) and click direct links to the generated GitHub Pull Requests.
+- **Visualization:** Users can monitor the real-time status (Pending, In Progress, In Review, Completed, Failed) and click direct links to the generated GitHub Pull Requests.
 
 ---
 

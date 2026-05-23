@@ -48,6 +48,7 @@ function App() {
       case 'completed': return '#10b981'
       case 'failed': return '#ef4444'
       case 'in_progress': return '#f59e0b'
+      case 'in_review': return '#8b5cf6'
       case 'pending': return '#3b82f6'
       default: return '#64748b'
     }

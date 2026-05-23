@@ -84,20 +84,54 @@ docker exec -i coding_automation_db psql -U agentuser -d agentdb -c "SELECT * FR
 - **Modules:** The project uses ES Modules (`import/export`).
 - **Validation:** Uses `zod` for schema validation and type safety.
 - **Error Handling:** Failed instructions are moved to a `dead_letter_queue` after several retries.
-- **Persistence:** All state transitions for an instruction (pending -> in_progress -> completed/failed) are tracked in the DB.
+- **Persistence:** All state transitions for an instruction (pending -> in_progress -> in_review -> completed/failed) are tracked in the DB.
 
 ### Agent Capabilities
 - **Autonomous Coding:** Analyzes directory structure and implements logic based on instructions.
 - **Jira Interaction:** Can fetch live updates (comments, description) and post comments back to Jira issues using the `get_jira_issue_details` and `post_jira_comment` tools.
 - **GitHub PRs:** Handles branch creation, commits, and PR submission automatically.
 
-### Key Directories
-- `Backend/server.js`: Main entry point and webhook handlers.
-- `Backend/agents/`: Core logic for the AI worker and LangGraph service.
-- `Backend/agents/Tools/`: Custom tools available to the Gemini agent (GitHub/Jira interaction).
-- `Backend/Repository/instructionRepository.js`: Database abstraction layer for instruction management.
-- `Backend/Utility/`: Constants and helper functions for external API integrations.
-- `Backend/db/`: Database initialization scripts and schema definitions.
+### Folder & File Structure
+
+Here is a comprehensive breakdown of the project layout and what each file is built to do:
+
+#### Root Files
+- [docker-compose.yml](file:///Users/pradeepsahu/Desktop/coding-automation/docker-compose.yml): Configures multi-container Docker services (the PostgreSQL DB `coding_automation_db` and the backend `coding_automation_backend`).
+- [vercel.json](file:///Users/pradeepsahu/Desktop/coding-automation/vercel.json): Vercel Serverless configuration, routing all traffic to the backend serverless handler.
+- [README.md](file:///Users/pradeepsahu/Desktop/coding-automation/README.md): High-level developer documentation, quick-start guide, and architectural summary.
+- [GEMINI.md](file:///Users/pradeepsahu/Desktop/coding-automation/GEMINI.md): Instructions, conventions, environment variable setup, and file maps for Gemini AI agent runs.
+
+#### Design Directory (`Design/`)
+- [Design/complete_design_v1.excalidraw](file:///Users/pradeepsahu/Desktop/coding-automation/Design/complete_design_v1.excalidraw): Excalidraw visual diagram outlining the system architecture and state transitions.
+- [Design/system_workflow.md](file:///Users/pradeepsahu/Desktop/coding-automation/Design/system_workflow.md): Deep-dive document detailing the step-by-step processing lifecycle of a task from Jira webhook to GitHub PR merge.
+
+#### Backend Directory (`Backend/`)
+- [Backend/server.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/server.js): Server entrypoint. Configures Express server routes, handles cors, registers webhooks, validates Gemini settings, and boots the agent worker.
+- [Backend/Dockerfile](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Dockerfile): Configuration to containerize the backend API and worker.
+- [Backend/Controllers/instructionController.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Controllers/instructionController.js): API controllers to query logs, instructions, and tasks for the UI dashboard.
+- [Backend/Controllers/webhookController.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Controllers/webhookController.js): Route handlers to process Jira assignments/comments and GitHub reviews/status events.
+- [Backend/Middleware/authMiddleware.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Middleware/authMiddleware.js): Custom middleware using HMAC verification to ensure incoming GitHub webhooks are secure and authentic.
+- [Backend/Repository/instructionRepository.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Repository/instructionRepository.js): Database layer abstraction. Handles all SQL queries for claiming pending tasks, saving PR associations, updating error state, and writing dead letter entries.
+- [Backend/db/init.sql](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/db/init.sql): Schema definition. Builds the tables, triggers, indexes, and pg_notify events required for queueing and logging.
+- [Backend/Utility/Constants.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Utility/Constants.js): Holds constant configuration values for webhook event matching.
+- [Backend/Utility/JiraUtility.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Utility/JiraUtility.js): Parsers to extract task text and comments out of the deeply nested Jira payloads.
+- [Backend/Utility/Logger.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Utility/Logger.js): Unified logger class that writes logging outputs both to standard output and the database table.
+- [Backend/Utility/WebhookUtility.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Utility/WebhookUtility.js): Normalizes raw request bodies for GitHub signature checks and determines if issues are assigned to the agent account.
+
+#### Backend Agent Logic (`Backend/agents/`)
+- [Backend/agents/agentWorker.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/agentWorker.js): Concurrency-controlled worker daemon. Establishes long-lived `LISTEN` sockets on PostgreSQL notifications and claims tasks. Transitions Jira issues to In Progress/Done based on state changes.
+- [Backend/agents/geminiLangGraphService.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/geminiLangGraphService.js): Prepares the LLM configuration (Gemini) and builds the LangGraph state machine agent. Generates system prompts and parses execution output to grab the created PR details.
+- [Backend/agents/Tools/githubTools.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/Tools/githubTools.js): Implements the `create_github_pull_request` tool using the Octokit client, handling branch refs, atomic git commits, and PR creation.
+- [Backend/agents/Tools/jiraAgentTools.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/Tools/jiraAgentTools.js): LangChain tools wrapper for Jira features (`get_jira_issue_details`, `post_jira_comment`).
+- [Backend/agents/Tools/jiraTools.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/Tools/jiraTools.js): Underlying Jira HTTP integration to transition issues, create comments, and fetch details.
+
+#### User Interface (`UI/`)
+- [UI/index.html](file:///Users/pradeepsahu/Desktop/coding-automation/UI/index.html): Main HTML wrapper for the frontend web app.
+- [UI/vite.config.js](file:///Users/pradeepsahu/Desktop/coding-automation/UI/vite.config.js): Configurations for building/developing with Vite.
+- [UI/src/main.jsx](file:///Users/pradeepsahu/Desktop/coding-automation/UI/src/main.jsx): Bundler entry point that mounts the App component into the root element.
+- [UI/src/App.jsx](file:///Users/pradeepsahu/Desktop/coding-automation/UI/src/App.jsx): Core UI component. Fetches data, displays logs and tasks list, renders status-colored labels, and provides links to live PRs.
+- [UI/src/index.css](file:///Users/pradeepsahu/Desktop/coding-automation/UI/src/index.css): Resets and core visual setup.
+- [UI/src/App.css](file:///Users/pradeepsahu/Desktop/coding-automation/UI/src/App.css): Modular dashboard styling layout.
 
 ### Environment Configuration
 The following environment variables are required in `Backend/.env`:

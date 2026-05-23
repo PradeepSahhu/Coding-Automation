@@ -27,7 +27,7 @@ export const getTasks = async (req, res) => {
     const query = `
       SELECT id, issue_id, status 
       FROM agent_instructions 
-      WHERE status IN ('in_progress', 'completed')
+      WHERE status IN ('in_progress', 'in_review', 'completed')
       ORDER BY created_at DESC
     `;
     const result = await pool.query(query);
