@@ -68,16 +68,16 @@ export async function claimNextPendingInstruction({
     WITH next_job AS (
       SELECT id
       FROM ${tableRef}
-      WHERE status = 'pending'
+      WHERE status = 'pending' OR (status = 'failed' AND COALESCE(attempts, 0) < 3)
       ORDER BY id
       FOR UPDATE SKIP LOCKED
       LIMIT 1
     )
     UPDATE ${tableRef} AS t
-    SET status = 'in_progress'
+    SET status = 'in_progress', attempts = COALESCE(t.attempts, 0) + 1
     FROM next_job
     WHERE t.id = next_job.id
-    RETURNING t.id, t.issue_id, t.instructions;
+    RETURNING t.id, t.issue_id, t.instructions, t.attempts;
   `;
 
   const client = await pool.connect();
@@ -288,7 +288,8 @@ export async function resetFailedInstructionToPending({
         pr_owner = NULL,
         pr_repo = NULL,
         pr_number = NULL,
-        pr_url = NULL
+        pr_url = NULL,
+        attempts = 0
     WHERE id = $1
     RETURNING id, issue_id, status, created_at;
   `;

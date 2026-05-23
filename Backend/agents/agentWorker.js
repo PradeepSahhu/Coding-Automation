@@ -38,6 +38,12 @@ const RETRY_BASE_DELAY_MS =
     ? parsedRetryBaseDelay
     : 1500;
 
+const parsedPollingInterval = Number(process.env.AGENT_POLLING_INTERVAL_MS || 30000);
+const POLLING_INTERVAL_MS =
+  Number.isFinite(parsedPollingInterval) && parsedPollingInterval > 0
+    ? parsedPollingInterval
+    : 30000;
+
 const activeWorkers = new Set();
 let pumpInProgress = false;
 let pumpRequested = false;
@@ -141,6 +147,9 @@ async function processInstructionRow(row) {
 }
 
 function spawnWorker(row) {
+  if (row.attempts > 1) {
+    console.log(`Retrying previously failed instruction ${row.id} (attempt ${row.attempts})`);
+  }
   const task = processInstructionRow(row).finally(() => {
     activeWorkers.delete(task);
     void pumpPendingInstructions();

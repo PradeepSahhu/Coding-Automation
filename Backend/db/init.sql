@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS agent_instructions (
   pr_number INTEGER,
   pr_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  completed_at TIMESTAMPTZ 
+  completed_at TIMESTAMPTZ,
+  attempts INTEGER DEFAULT 0
 );
 
 ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS last_error TEXT;
@@ -17,6 +18,7 @@ ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS pr_owner TEXT;
 ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS pr_repo TEXT;
 ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS pr_number INTEGER;
 ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS pr_url TEXT;
+ALTER TABLE agent_instructions ADD COLUMN IF NOT EXISTS attempts INTEGER DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_agent_instructions_status
 ON agent_instructions (status);
