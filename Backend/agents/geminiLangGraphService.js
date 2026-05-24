@@ -207,6 +207,35 @@ function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
     .trim();
 }
 
+export function createGeminiModelWithFallbacks() {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    throw new Error("GOOGLE_API_KEY is missing. Set it in Backend/.env");
+  }
+
+  const temperature = 0;
+  
+  // The priority order requested by the user
+  const modelNames = [
+    process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3-flash-live"
+  ];
+
+  const models = modelNames.map(modelName => new ChatGoogleGenerativeAI({
+    model: modelName,
+    apiKey,
+    temperature
+  }));
+
+  const primaryModel = models[0];
+  const fallbacks = models.slice(1);
+
+  return primaryModel.withFallbacks({ fallbacks });
+}
+
 export async function validateGeminiModelConfiguration() {
   const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const apiKey = process.env.GOOGLE_API_KEY;
@@ -215,19 +244,16 @@ export async function validateGeminiModelConfiguration() {
     throw new Error("GOOGLE_API_KEY is missing. Set it in Backend/.env");
   }
 
-  const model = new ChatGoogleGenerativeAI({
-    model: modelName,
-    apiKey,
-    temperature: 0,
-  });
+  const model = createGeminiModelWithFallbacks();
 
   try {
     // A minimal call verifies both model identifier and API key at startup.
+    // withFallbacks will automatically try the next model if the first one fails.
     await model.invoke("Reply with exactly: OK");
   } catch (error) {
     const details = error?.message || String(error);
     throw new Error(
-      `Gemini validation failed for model '${modelName}'. ${details}`,
+      `Gemini validation failed for primary model and all fallbacks. ${details}`,
     );
   }
 
@@ -241,11 +267,7 @@ export async function runGeminiLangGraphAgent({
 } = {}) {
   const instructionRow = await getInstructionFromDb({ instructionId });
 
-  const model = new ChatGoogleGenerativeAI({
-    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
-    apiKey: process.env.GOOGLE_API_KEY,
-    temperature: 0,
-  });
+  const model = createGeminiModelWithFallbacks();
 
   const tools = [createPullRequestTool(), ...createJiraTools()];
 
