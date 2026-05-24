@@ -1,6 +1,6 @@
 ---
-name: code-review
-description: Reviews code changes for bugs, style issues, and best practices. Use when reviewing PRs or checking code quality.
+name: ui-pr-reviewer
+description: Autonomously reviews frontend and UI code changes (React, CSS, Vite) before merging. Focuses on state management, visual consistency, CSS responsiveness, micro-animations, and ensuring production builds pass. Use this skill whenever a Pull Request modifies the UI directory.
 ---
 
 # UI Pull Request Review Skills & Guidelines
