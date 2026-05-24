@@ -261,9 +261,40 @@ export async function runGeminiLangGraphAgent({
     issueId: instructionRow.issueId,
   });
 
-  const result = await agent.invoke({
-    messages: [new HumanMessage(prompt)],
-  });
+  const result = await agent.invoke(
+    {
+      messages: [new HumanMessage(prompt)],
+    },
+    {
+      callbacks: [
+        {
+          handleToolStart(tool, input) {
+            console.log(`[Tool Start] Agent is calling tool '${tool.id ? tool.id[tool.id.length - 1] : "unknown"}'`);
+            console.log(`[Tool Input]`, input);
+          },
+          handleToolEnd(output, runId, parentRunId, tags) {
+            console.log(`[Tool End] Tool execution completed successfully.`);
+          },
+          handleToolError(error) {
+            console.error(`[Tool Error] Tool execution failed:`, error);
+          },
+          handleLLMStart() {
+            console.log(`[LLM Start] Agent is reasoning...`);
+          },
+          handleLLMEnd(output) {
+            if (output?.generations?.[0]?.[0]?.message?.content) {
+               console.log(`[LLM Output] Agent finished reasoning. Output generated.`);
+            } else {
+               console.log(`[LLM End] Reasoning complete.`);
+            }
+          },
+          handleLLMError(err) {
+            console.error(`[LLM Error]`, err);
+          }
+        },
+      ],
+    }
+  );
 
   const lastMessage = result.messages[result.messages.length - 1];
   const responseText =

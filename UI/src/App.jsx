@@ -7,10 +7,12 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Modal and Execution Logs state
-  const [selectedInstruction, setSelectedInstruction] = useState(null)
+  // Details View and Execution Logs state
+  const [selectedInstructionId, setSelectedInstructionId] = useState(null)
   const [instructionLogs, setInstructionLogs] = useState([])
   const [loadingInstructionLogs, setLoadingInstructionLogs] = useState(false)
+
+  const selectedInstruction = instructions.find(i => i.id === selectedInstructionId) || null
 
   const BACKEND_URL = 'https://coding-automation.vercel.app';
 
@@ -33,11 +35,6 @@ function App() {
 
       if (instData.success) {
         setInstructions(instData.instructions)
-        // Keep selected instruction updated with fresh backend data (e.g. status changes)
-        if (selectedInstruction) {
-          const fresh = instData.instructions.find(i => i.id === selectedInstruction.id)
-          if (fresh) setSelectedInstruction(fresh)
-        }
       }
       if (logData.success) setLogs(logData.logs)
       
@@ -53,7 +50,7 @@ function App() {
     fetchData()
     const interval = setInterval(fetchData, 5000)
     return () => clearInterval(interval)
-  }, [selectedInstruction])
+  }, [])
 
   // Fetch execution logs for specific instruction
   useEffect(() => {
@@ -117,6 +114,86 @@ function App() {
     return `${seconds}s`
   }
 
+  if (selectedInstruction) {
+    return (
+      <div className="container">
+        <header>
+          <h1>Task Overview</h1>
+          <button onClick={() => setSelectedInstructionId(null)} className="refresh-btn">Back to Dashboard</button>
+        </header>
+        
+        <div className="details-view">
+          <div className="modal-meta-grid">
+            <div className="modal-meta-card">
+              <span className="meta-label">Jira Story</span>
+              <span className="meta-val highlight-val">{selectedInstruction.issue_id}</span>
+            </div>
+            <div className="modal-meta-card">
+              <span className="meta-label">Status</span>
+              <span className="status-badge" style={{ backgroundColor: getStatusColor(selectedInstruction.status) }}>
+                {selectedInstruction.status === 'failed_pr' ? 'PR Failed' : selectedInstruction.status.replace('_', ' ')}
+              </span>
+            </div>
+            {getDurationText(selectedInstruction) && (
+              <div className="modal-meta-card">
+                <span className="meta-label">Time Taken</span>
+                <span className="meta-val duration-val">{getDurationText(selectedInstruction)}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="modal-section">
+            <h3>Story Instructions</h3>
+            <div className="instructions-container">
+              <pre>{selectedInstruction.instructions}</pre>
+            </div>
+          </div>
+
+          {selectedInstruction.pr_url && (
+            <div className="modal-section pr-modal-section">
+              <h3>Generated Pull Request</h3>
+              <a href={selectedInstruction.pr_url} target="_blank" rel="noopener noreferrer" className="pr-link">
+                <svg className="github-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style={{ marginRight: '6px' }}>
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+                </svg>
+                View Pull Request #{selectedInstruction.pr_number}
+              </a>
+            </div>
+          )}
+
+          {selectedInstruction.last_error && (
+            <div className="modal-section error-modal-section">
+              <h3>Failure Diagnostics</h3>
+              <div className="error-box">
+                <strong>Error:</strong> {selectedInstruction.last_error}
+              </div>
+            </div>
+          )}
+
+          <div className="modal-section">
+            <h3>Agent Execution logs</h3>
+            <div className="terminal-logs">
+              {instructionLogs.length === 0 ? (
+                <p className="log-empty">
+                  {selectedInstruction.status === 'pending'
+                    ? 'Task is pending in queue. Agent has not started executing.'
+                    : 'No logs recorded for this task.'}
+                </p>
+              ) : (
+                instructionLogs.map((log, idx) => (
+                  <div key={idx} className="terminal-line">
+                    <span className="terminal-time">[{new Date(log.created_at).toLocaleTimeString()}]</span>
+                    <span className="terminal-text">{log.log_line}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container">
       <header>
@@ -132,7 +209,7 @@ function App() {
         {!loading && instructions.length === 0 && <p>No instructions found.</p>}
         <div className="grid">
           {instructions.map((item) => (
-            <div key={item.id} className="card clickable-card" onClick={() => setSelectedInstruction(item)}>
+            <div key={item.id} className="card clickable-card" onClick={() => setSelectedInstructionId(item.id)}>
               <div className="card-header">
                 <span className="issue-id">{item.issue_id}</span>
                 <span 
@@ -183,87 +260,7 @@ function App() {
         </div>
       </section>
 
-      {selectedInstruction && (
-        <div className="modal-overlay" onClick={() => setSelectedInstruction(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <header className="modal-header">
-              <h2>Task Overview</h2>
-              <button className="close-btn" onClick={() => setSelectedInstruction(null)}>&times;</button>
-            </header>
-
-            <div className="modal-body">
-              <div className="modal-meta-grid">
-                <div className="modal-meta-card">
-                  <span className="meta-label">Jira Story</span>
-                  <span className="meta-val highlight-val">{selectedInstruction.issue_id}</span>
-                </div>
-                <div className="modal-meta-card">
-                  <span className="meta-label">Status</span>
-                  <span className="status-badge" style={{ backgroundColor: getStatusColor(selectedInstruction.status) }}>
-                    {selectedInstruction.status === 'failed_pr' ? 'PR Failed' : selectedInstruction.status.replace('_', ' ')}
-                  </span>
-                </div>
-                {getDurationText(selectedInstruction) && (
-                  <div className="modal-meta-card">
-                    <span className="meta-label">Time Taken</span>
-                    <span className="meta-val duration-val">{getDurationText(selectedInstruction)}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="modal-section">
-                <h3>Story Instructions</h3>
-                <div className="instructions-container">
-                  <pre>{selectedInstruction.instructions}</pre>
-                </div>
-              </div>
-
-              {selectedInstruction.pr_url && (
-                <div className="modal-section pr-modal-section">
-                  <h3>Generated Pull Request</h3>
-                  <a href={selectedInstruction.pr_url} target="_blank" rel="noopener noreferrer" className="pr-link">
-                    <svg className="github-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style={{ marginRight: '6px' }}>
-                      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-                    </svg>
-                    View Pull Request #{selectedInstruction.pr_number}
-                  </a>
-                </div>
-              )}
-
-              {selectedInstruction.last_error && (
-                <div className="modal-section error-modal-section">
-                  <h3>Failure Diagnostics</h3>
-                  <div className="error-box">
-                    <strong>Error:</strong> {selectedInstruction.last_error}
-                  </div>
-                </div>
-              )}
-
-              <div className="modal-section">
-                <h3>Agent Execution logs</h3>
-                <div className="terminal-logs">
-                  {instructionLogs.length === 0 ? (
-                    <p className="log-empty">
-                      {selectedInstruction.status === 'pending'
-                        ? 'Task is pending in queue. Agent has not started executing.'
-                        : 'No logs recorded for this task.'}
-                    </p>
-                  ) : (
-                    instructionLogs.map((log, idx) => (
-                      <div key={idx} className="terminal-line">
-                        <span className="terminal-time">[{new Date(log.created_at).toLocaleTimeString()}]</span>
-                        <span className="terminal-text">{log.log_line}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <section className="logs-section">
+      </section>
         <h2>Backend Logs</h2>
         <div className="logs-container">
           {logs.length === 0 && <p>No logs available.</p>}

@@ -270,7 +270,7 @@ h1 {
   color: #ef4444;
 }
 
-.modal-body {
+.modal-body, .details-view {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
