@@ -260,7 +260,7 @@ function App() {
         </div>
       </section>
 
-      </section>
+      <section className="logs-section">
         <h2>Backend Logs</h2>
         <div className="logs-container">
           {logs.length === 0 && <p>No logs available.</p>}
