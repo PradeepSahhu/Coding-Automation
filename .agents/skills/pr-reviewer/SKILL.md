@@ -1,3 +1,8 @@
+---
+name: code-review
+description: Reviews code changes for bugs, style issues, and best practices. Use when reviewing PRs or checking code quality.
+---
+
 # UI Pull Request Review Skills & Guidelines
 
 This document outlines the essential skills, criteria, and checklists required for reviewing Pull Requests (PRs) that modify the `UI/` (Frontend) directory of the Coding Automation project. All agents and developers must verify these criteria before merging a PR.
