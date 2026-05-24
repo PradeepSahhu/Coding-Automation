@@ -233,7 +233,17 @@ export function createGeminiModelWithFallbacks() {
   const primaryModel = models[0];
   const fallbacks = models.slice(1);
 
-  return primaryModel.withFallbacks({ fallbacks });
+  const runnableWithFallbacks = primaryModel.withFallbacks({ fallbacks });
+
+  // LangGraph's createReactAgent requires the LLM to have a bindTools method.
+  // We must explicitly delegate bindTools down to the primary model and its fallbacks.
+  runnableWithFallbacks.bindTools = (tools, kwargs) => {
+    return primaryModel.bindTools(tools, kwargs).withFallbacks({
+      fallbacks: fallbacks.map(model => model.bindTools(tools, kwargs))
+    });
+  };
+
+  return runnableWithFallbacks;
 }
 
 export async function validateGeminiModelConfiguration() {
