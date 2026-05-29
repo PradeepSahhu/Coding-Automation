@@ -10,6 +10,7 @@ import {
   markInstructionCompleted,
   markInstructionFailed,
   saveInstructionPullRequest,
+  resetInProgressInstructions,
 } from "../Repository/instructionRepository.js";
 import {
   transitionIssueToDone,
@@ -193,6 +194,11 @@ async function pumpPendingInstructions() {
 }
 
 export async function startAgentWorker() {
+  const resetTasks = await resetInProgressInstructions();
+  if (resetTasks.length > 0) {
+    logger.info(`Reset ${resetTasks.length} stuck 'in_progress' tasks back to 'pending'.`);
+  }
+
   const listener = await createInstructionListenerClient();
 
   listener.on("error", (err) => {

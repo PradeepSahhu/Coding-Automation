@@ -95,6 +95,21 @@ export async function claimNextPendingInstruction({
   }
 }
 
+export async function resetInProgressInstructions({
+  tableName = DEFAULT_TABLE_NAME,
+} = {}) {
+  const tableRef = getSafeTableName(tableName);
+  const query = `
+    UPDATE ${tableRef}
+    SET status = 'pending', attempts = 0
+    WHERE status = 'in_progress'
+    RETURNING id;
+  `;
+
+  const result = await pool.query(query);
+  return result.rows || [];
+}
+
 export async function markInstructionCompleted({
   instructionId,
   tableName = DEFAULT_TABLE_NAME,
