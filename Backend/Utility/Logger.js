@@ -23,7 +23,10 @@ console.log = (...args) => {
   const store = logStorage.getStore();
   if (store && store.instructionId) {
     const message = args
-      .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+      .map((arg) => {
+        if (arg instanceof Error) return arg.stack || arg.message || String(arg);
+        return typeof arg === "object" ? JSON.stringify(arg) : String(arg);
+      })
       .join(" ");
     saveAgentLog(store.instructionId, message);
   }
@@ -34,7 +37,10 @@ console.warn = (...args) => {
   const store = logStorage.getStore();
   if (store && store.instructionId) {
     const message = args
-      .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+      .map((arg) => {
+        if (arg instanceof Error) return arg.stack || arg.message || String(arg);
+        return typeof arg === "object" ? JSON.stringify(arg) : String(arg);
+      })
       .join(" ");
     saveAgentLog(store.instructionId, `[WARN] ${message}`);
   }
@@ -45,7 +51,10 @@ console.error = (...args) => {
   const store = logStorage.getStore();
   if (store && store.instructionId) {
     const message = args
-      .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+      .map((arg) => {
+        if (arg instanceof Error) return arg.stack || arg.message || String(arg);
+        return typeof arg === "object" ? JSON.stringify(arg) : String(arg);
+      })
       .join(" ");
     saveAgentLog(store.instructionId, `[ERROR] ${message}`);
   }

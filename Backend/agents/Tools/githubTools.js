@@ -76,8 +76,25 @@ async function getBranchRef({ octokit, owner, repo, branch }) {
 }
 
 async function ensureBranch({ octokit, owner, repo, base, branchName }) {
-  const baseRef = await getBranchRef({ octokit, owner, repo, branch: base });
-
+  let baseRef;
+  try {
+    baseRef = await getBranchRef({ octokit, owner, repo, branch: base });
+  } catch (error) {
+    if (error.status === 409 || error.status === 404) {
+      console.log(`Base branch ${base} not found. Initializing repository...`);
+      await octokit.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path: "README.md",
+        message: "Initial commit",
+        content: Buffer.from("# Project initialized by Agent").toString("base64"),
+        branch: base,
+      });
+      baseRef = await getBranchRef({ octokit, owner, repo, branch: base });
+    } else {
+      throw error;
+    }
+  }
   try {
     await octokit.git.createRef({
       owner,
