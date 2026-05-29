@@ -104,7 +104,7 @@ async function processInstructionRow(row) {
       });
 
       console.log(
-        `Instruction ${row.id} is in_progress and waiting for merge of ${primaryPr.owner}/${primaryPr.repo}#${primaryPr.number}`,
+        `Instruction ${row.id} is in_review and waiting for merge of ${primaryPr.owner}/${primaryPr.repo}#${primaryPr.number}`,
       );
       return;
     } catch (error) {

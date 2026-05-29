@@ -102,7 +102,7 @@ export async function resetInProgressInstructions({
   const query = `
     UPDATE ${tableRef}
     SET status = 'pending', attempts = 0
-    WHERE status = 'in_progress'
+    WHERE status = 'in_progress' AND pr_url IS NULL
     RETURNING id;
   `;
 
