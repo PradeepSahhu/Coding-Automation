@@ -1,5 +1,5 @@
 import { runDeepseekLangGraphAgent } from "./deepseekLangGraphService.js";
-import { logStorage } from "../Utility/Logger.js";
+import { logStorage, logger } from "../Utility/Logger.js";
 import {
   claimNextPendingInstruction,
   createFollowUpInstructionFromPullRequestFeedback,
@@ -39,11 +39,11 @@ const RETRY_BASE_DELAY_MS =
     ? parsedRetryBaseDelay
     : 1500;
 
-const parsedPollingInterval = Number(process.env.AGENT_POLLING_INTERVAL_MS || 60000);
+const parsedPollingInterval = Number(process.env.AGENT_POLLING_INTERVAL_MS || 15000);
 const POLLING_INTERVAL_MS =
   Number.isFinite(parsedPollingInterval) && parsedPollingInterval > 0
     ? parsedPollingInterval
-    : 60000;
+    : 15000;
 
 const activeWorkers = new Set();
 let pumpInProgress = false;
@@ -209,7 +209,7 @@ export async function startAgentWorker() {
   await pumpPendingInstructions();
 
   setInterval(async () => {
-    console.log("Polling database for pending instructions...");
+    logger.info("Backend is polling database for pending tasks (every 15 seconds)...");
     await pumpPendingInstructions();
   }, POLLING_INTERVAL_MS);
 
