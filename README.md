@@ -1,9 +1,9 @@
 # Coding Automation Agent 🚀
 
-An autonomous AI agent system that integrates Jira and GitHub to automate software engineering tasks. This system listens for Jira assignments, generates code changes using Google Gemini, submits Pull Requests, and handles feedback loops automatically.
+An autonomous AI agent system that integrates Jira and GitHub to automate software engineering tasks. This system listens for Jira assignments, generates code changes using DeepSeek, submits Pull Requests, and handles feedback loops automatically.
 
 ## 🌟 Key Features
-- **Autonomous Coding:** Uses Gemini and LangGraph to analyze codebases and implement features/fixes.
+- **Autonomous Coding:** Uses DeepSeek and LangGraph to analyze codebases and implement features/fixes.
 - **Jira Integration:** Automatically picks up assigned issues and transitions them to "In Progress" or "Done".
 - **GitHub Automation:** Creates branches, commits code, and opens Pull Requests.
 - **Real-time Dashboard:** A React-based UI to monitor task status (Pending, In Progress, Completed, Failed).
@@ -13,7 +13,7 @@ An autonomous AI agent system that integrates Jira and GitHub to automate softwa
 ## 🏗️ Architecture
 The system follows a modular MVC-like pattern:
 - **Backend:** Node.js/Express with modular controllers and middlewares.
-- **Agent:** LangGraph-orchestrated worker using Google Gemini LLM.
+- **Agent:** LangGraph-orchestrated worker using DeepSeek LLM.
 - **UI:** Vite-powered React dashboard for observability.
 - **Database:** PostgreSQL for persistent task management.
 
@@ -23,7 +23,7 @@ For a deep dive into the technical workflow, see [Design/system_workflow.md](Des
 
 ### 1. Prerequisites
 - Node.js (v18+) & Docker
-- Google Gemini API Key
+- DeepSeek API Key
 - GitHub Personal Access Token
 - Jira API Token
 

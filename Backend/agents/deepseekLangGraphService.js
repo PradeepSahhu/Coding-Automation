@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
 import { getInstructionFromDb } from "../Repository/instructionRepository.js";
 import { createPullRequestTool } from "./Tools/githubTools.js";
@@ -207,77 +207,54 @@ function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
     .trim();
 }
 
-export function createGeminiModelWithFallbacks() {
-  const apiKey = process.env.GOOGLE_API_KEY;
+export function createDeepseekModel() {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    throw new Error("GOOGLE_API_KEY is missing. Set it in Backend/.env");
+    throw new Error("DEEPSEEK_API_KEY is missing. Set it in Backend/.env");
   }
 
-  const temperature = 0;
-  
-  // The priority order requested by the user
-  const modelNames = [
-    process.env.GEMINI_MODEL || "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
-    "gemini-3-flash-live"
-  ];
+  const modelName = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 
-  const models = modelNames.map(modelName => new ChatGoogleGenerativeAI({
+  return new ChatOpenAI({
     model: modelName,
-    apiKey,
-    temperature
-  }));
-
-  const primaryModel = models[0];
-  const fallbacks = models.slice(1);
-
-  const runnableWithFallbacks = primaryModel.withFallbacks({ fallbacks });
-
-  // LangGraph's createReactAgent requires the LLM to have a bindTools method.
-  // We must explicitly delegate bindTools down to the primary model and its fallbacks.
-  runnableWithFallbacks.bindTools = (tools, kwargs) => {
-    return primaryModel.bindTools(tools, kwargs).withFallbacks({
-      fallbacks: fallbacks.map(model => model.bindTools(tools, kwargs))
-    });
-  };
-
-  return runnableWithFallbacks;
+    temperature: 0,
+    openAIApiKey: apiKey,
+    configuration: {
+      baseURL: "https://api.deepseek.com",
+    },
+  });
 }
 
-export async function validateGeminiModelConfiguration() {
-  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-  const apiKey = process.env.GOOGLE_API_KEY;
+export async function validateDeepseekModelConfiguration() {
+  const modelName = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
+  const apiKey = process.env.DEEPSEEK_API_KEY;
 
   if (!apiKey) {
-    throw new Error("GOOGLE_API_KEY is missing. Set it in Backend/.env");
+    throw new Error("DEEPSEEK_API_KEY is missing. Set it in Backend/.env");
   }
 
-  const model = createGeminiModelWithFallbacks();
+  const model = createDeepseekModel();
 
   try {
-    // A minimal call verifies both model identifier and API key at startup.
-    // withFallbacks will automatically try the next model if the first one fails.
     await model.invoke("Reply with exactly: OK");
   } catch (error) {
     const details = error?.message || String(error);
     throw new Error(
-      `Gemini validation failed for primary model and all fallbacks. ${details}`,
+      `DeepSeek validation failed. ${details}`,
     );
   }
 
   return { modelName };
 }
 
-export async function runGeminiLangGraphAgent({
+export async function runDeepseekLangGraphAgent({
   instructionId,
   userRequest,
   context,
 } = {}) {
   const instructionRow = await getInstructionFromDb({ instructionId });
 
-  const model = createGeminiModelWithFallbacks();
+  const model = createDeepseekModel();
 
   const tools = [createPullRequestTool(), ...createJiraTools()];
 

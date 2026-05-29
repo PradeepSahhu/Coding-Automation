@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { startAgentWorker } from "./agents/agentWorker.js";
-import { validateGeminiModelConfiguration } from "./agents/geminiLangGraphService.js";
+import { validateDeepseekModelConfiguration } from "./agents/deepseekLangGraphService.js";
 import { verifyGitHubSignature } from "./Middleware/authMiddleware.js";
 import {
   githubWebhookHandler,
@@ -41,8 +41,8 @@ app.get("/api/tasks", getTasks);
 app.get("/api/instructions/:id/logs", getInstructionLogs);
 
 async function bootstrap() {
-  const { modelName } = await validateGeminiModelConfiguration();
-  console.log(`Gemini model '${modelName}' validated successfully`);
+  const { modelName } = await validateDeepseekModelConfiguration();
+  console.log(`DeepSeek model '${modelName}' validated successfully`);
 
   await startAgentWorker();
 

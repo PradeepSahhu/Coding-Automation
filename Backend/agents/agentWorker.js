@@ -1,4 +1,4 @@
-import { runGeminiLangGraphAgent } from "./geminiLangGraphService.js";
+import { runDeepseekLangGraphAgent } from "./deepseekLangGraphService.js";
 import { logStorage } from "../Utility/Logger.js";
 import {
   claimNextPendingInstruction,
@@ -73,7 +73,7 @@ async function processInstructionRow(row) {
         }
       }
 
-      const agentResult = await runGeminiLangGraphAgent({
+      const agentResult = await runDeepseekLangGraphAgent({
         instructionId: row.id,
       });
 

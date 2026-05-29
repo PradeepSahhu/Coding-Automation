@@ -16,11 +16,11 @@ This document details the step-by-step process of how the Coding Automation syst
 - **Concurrency:** When a task is detected, a worker "claims" the row by updating its status to `in_progress` (using `SKIP LOCKED` for thread safety).
 - **Retry Logic:** If an agent fails, the worker retries the task up to 3 times with exponential backoff before moving it to the `dead_letter_queue`.
 
-## 3. Autonomous Agent Execution (LangGraph + Gemini)
+## 3. Autonomous Agent Execution (LangGraph + DeepSeek)
 - **Context Gathering:** 
   - The agent reads the project files and the snapshot instructions from the database.
   - **Hybrid Logic:** If the agent finds the instructions ambiguous or suspects recent changes, it can use the `get_jira_issue_details` tool to fetch live data (description, comments, status) directly from the Jira API.
-- **Decision Making:** Using the Gemini LLM, the agent decides which files need modification.
+- **Decision Making:** Using the DeepSeek LLM, the agent decides which files need modification.
 - **Execution:**
   - The agent applies code changes locally.
   - It uses the `githubTools` to create a new branch.

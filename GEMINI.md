@@ -10,7 +10,7 @@ The **Coding Automation** project is an autonomous system designed to handle Jir
 - **Runtime:** Node.js (ESM)
 - **Framework:** Express.js
 - **AI Orchestration:** LangChain / LangGraph
-- **LLM:** Google Gemini (via `@langchain/google-genai`)
+- **LLM:** DeepSeek (via `@langchain/openai`)
 - **Database:** PostgreSQL (with `pg` driver and native NOTIFY/LISTEN for queueing)
 - **External APIs:** Jira Webhooks, GitHub REST API (`@octokit/rest`)
 - **Infrastructure:** Docker Compose (for DB), ngrok (for local webhook exposure)
@@ -21,7 +21,7 @@ For a detailed step-by-step walkthrough of how the system processes tasks, refer
 1.  **Ingestion:** Jira webhooks notify the Backend when an issue is assigned to the configured Agent account.
 2.  **Instruction Queue:** The Backend creates an entry in the `agent_instructions` table in PostgreSQL.
 3.  **Worker:** A background `agentWorker` listens for Postgres notifications, claims pending instructions, and triggers the AI agent.
-4.  **Execution:** The Gemini-powered agent uses tools to read the codebase, identify required changes, and submit a Pull Request.
+4.  **Execution:** The DeepSeek-powered agent uses tools to read the codebase, identify required changes, and submit a Pull Request.
 5.  **Feedback Loop:** GitHub webhooks (PR merged, closed, or review feedback) trigger status updates in Jira and can create follow-up instructions for the agent (e.g., to fix PR review comments).
 
 ---
@@ -106,7 +106,7 @@ Here is a comprehensive breakdown of the project layout and what each file is bu
 - [Design/system_workflow.md](file:///Users/pradeepsahu/Desktop/coding-automation/Design/system_workflow.md): Deep-dive document detailing the step-by-step processing lifecycle of a task from Jira webhook to GitHub PR merge.
 
 #### Backend Directory (`Backend/`)
-- [Backend/server.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/server.js): Server entrypoint. Configures Express server routes, handles cors, registers webhooks, validates Gemini settings, and boots the agent worker.
+- [Backend/server.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/server.js): Server entrypoint. Configures Express server routes, handles cors, registers webhooks, validates DeepSeek settings, and boots the agent worker.
 - [Backend/Dockerfile](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Dockerfile): Configuration to containerize the backend API and worker.
 - [Backend/Controllers/instructionController.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Controllers/instructionController.js): API controllers to query logs, instructions, and tasks for the UI dashboard.
 - [Backend/Controllers/webhookController.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/Controllers/webhookController.js): Route handlers to process Jira assignments/comments and GitHub reviews/status events.
@@ -120,7 +120,7 @@ Here is a comprehensive breakdown of the project layout and what each file is bu
 
 #### Backend Agent Logic (`Backend/agents/`)
 - [Backend/agents/agentWorker.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/agentWorker.js): Concurrency-controlled worker daemon. Establishes long-lived `LISTEN` sockets on PostgreSQL notifications and claims tasks. Transitions Jira issues to In Progress/Done based on state changes.
-- [Backend/agents/geminiLangGraphService.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/geminiLangGraphService.js): Prepares the LLM configuration (Gemini) and builds the LangGraph state machine agent. Generates system prompts and parses execution output to grab the created PR details.
+- [Backend/agents/deepseekLangGraphService.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/deepseekLangGraphService.js): Prepares the LLM configuration (DeepSeek) and builds the LangGraph state machine agent. Generates system prompts and parses execution output to grab the created PR details.
 - [Backend/agents/Tools/githubTools.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/Tools/githubTools.js): Implements the `create_github_pull_request` tool using the Octokit client, handling branch refs, atomic git commits, and PR creation.
 - [Backend/agents/Tools/jiraAgentTools.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/Tools/jiraAgentTools.js): LangChain tools wrapper for Jira features (`get_jira_issue_details`, `post_jira_comment`).
 - [Backend/agents/Tools/jiraTools.js](file:///Users/pradeepsahu/Desktop/coding-automation/Backend/agents/Tools/jiraTools.js): Underlying Jira HTTP integration to transition issues, create comments, and fetch details.
@@ -135,7 +135,8 @@ Here is a comprehensive breakdown of the project layout and what each file is bu
 
 ### Environment Configuration
 The following environment variables are required in `Backend/.env`:
-- `GOOGLE_API_KEY`: For Gemini access.
+- `DEEPSEEK_API_KEY`: For DeepSeek access.
+- `DEEPSEEK_MODEL`: (Optional) Model name to use (default: deepseek-v4-flash).
 - `GITHUB_TOKEN`: Personal Access Token for PR creation.
 - `GITHUB_WEBHOOK_SECRET`: For validating incoming GitHub webhooks.
 - `JIRA_HOST`, `JIRA_EMAIL`, `JIRA_API_TOKEN`: For Jira API interactions.
