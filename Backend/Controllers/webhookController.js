@@ -23,7 +23,9 @@ export const githubWebhookHandler = async (req, res) => {
     const event = req.headers["x-github-event"];
     const { payload } = parseGitHubWebhookBody(req.body);
 
-    logger.info(`Received GitHub Webhook: ${event}`, { action: payload?.action });
+    if (event !== "push") {
+      logger.info(`Received GitHub Webhook: ${event}`, { action: payload?.action });
+    }
 
     if (event === "ping") {
       return res.status(200).json({ success: true, message: "Ping received", zen: payload?.zen });
