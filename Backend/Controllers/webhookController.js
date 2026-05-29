@@ -46,28 +46,16 @@ export const githubWebhookHandler = async (req, res) => {
     if (event === "pull_request_review" && payload.action === "submitted") {
       const reviewState = payload.review.state;
       if (reviewState.toLowerCase() === "changes_requested") {
-        const result = await handlePullRequestChangesRequested({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          number: payload.pull_request.number,
-          feedback: payload.review.body || "Reviewer requested changes",
-          source: "pull_request_review"
-        });
-        return res.status(200).json({ success: true, ...result });
+        logger.info(`Received changes_requested for PR #${payload.pull_request.number}. Automatic follow-up task creation is disabled.`);
+        return res.status(200).json({ success: true, ignored: true, message: "Automatic follow-up task creation disabled" });
       }
     }
 
     if (event === "issue_comment" && payload.action === "created" && payload.issue.pull_request) {
       const body = payload.comment.body || "";
       if (body.toLowerCase().includes("[agent-fix]")) {
-        const result = await handlePullRequestChangesRequested({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          number: payload.issue.number,
-          feedback: body,
-          source: "issue_comment"
-        });
-        return res.status(200).json({ success: true, ...result });
+        logger.info(`Received [agent-fix] for PR #${payload.issue.number}. Automatic follow-up task creation is disabled.`);
+        return res.status(200).json({ success: true, ignored: true, message: "Automatic follow-up task creation disabled" });
       }
     }
 
