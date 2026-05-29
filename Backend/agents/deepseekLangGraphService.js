@@ -3,7 +3,7 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
 import { getInstructionFromDb } from "../Repository/instructionRepository.js";
-import { createPullRequestTool } from "./Tools/githubTools.js";
+import { createPullRequestTool, createReadGithubFileTool } from "./Tools/githubTools.js";
 import { createJiraTools } from "./Tools/jiraAgentTools.js";
 
 function normalizeContentToText(rawContent) {
@@ -170,10 +170,10 @@ function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
     "You are a coding execution agent. Your job is to implement the requested changes and open a GitHub pull request.",
     "",
     "CRITICAL RULES — you MUST follow these without exception:",
-    "1. You MUST call the tool `create_github_pull_request` before finishing. This is non-negotiable.",
-    "2. Do NOT respond with just text. The ONLY valid output is calling the tool.",
-    "3. Generate real working code files for the task described below.",
-    "4. fileChanges MUST contain at least one file with full file content.",
+    "1. First, you MUST read the repository files using the `read_github_repo_file` tool to understand the existing code.",
+    "2. Next, write out a detailed step-by-step plan of what you intend to do. (This text will be automatically logged to the PostgreSQL database so the user can review it).",
+    "3. Finally, execute the tasks by generating the real working code files and calling `create_github_pull_request`.",
+    "4. You MUST call the tool `create_github_pull_request` before finishing. This is non-negotiable.",
     "5. Use EXACTLY these GitHub details — do NOT invent or change them:",
     `   - owner: ${owner}`,
     `   - repo: ${repo}`,
@@ -210,7 +210,7 @@ function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
 export function createDeepseekModel() {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    throw new Error("DEEPSEEK_API_KEY is missing. Set it in Backend/.env");
+    throw new Error("DEEPSEEK_API_KEY is missing. Set it in Backend/.env or as a system environment variable.");
   }
 
   const modelName = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
@@ -239,7 +239,7 @@ export async function validateDeepseekModelConfiguration() {
   const apiKey = process.env.DEEPSEEK_API_KEY;
 
   if (!apiKey) {
-    throw new Error("DEEPSEEK_API_KEY is missing. Set it in Backend/.env");
+    throw new Error("DEEPSEEK_API_KEY is missing. Set it in Backend/.env or as a system environment variable.");
   }
 
   const model = createDeepseekModel();
@@ -265,7 +265,7 @@ export async function runDeepseekLangGraphAgent({
 
   const model = createDeepseekModel();
 
-  const tools = [createPullRequestTool(), ...createJiraTools()];
+  const tools = [createPullRequestTool(), createReadGithubFileTool(), ...createJiraTools()];
 
   const agent = createReactAgent({
     llm: model,

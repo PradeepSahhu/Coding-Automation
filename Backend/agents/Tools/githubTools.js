@@ -343,3 +343,50 @@ export function createPullRequestTool() {
     },
   );
 }
+
+export function createReadGithubFileTool() {
+  return tool(
+    async ({ owner, repo, path, branch }) => {
+      try {
+        const octokit = getOctokitFromEnv();
+        const target = resolveGitHubTarget({ owner, repo, base: branch });
+        
+        const response = await octokit.repos.getContent({
+          owner: target.owner,
+          repo: target.repo,
+          path,
+          ref: target.base,
+        });
+
+        if (Array.isArray(response.data)) {
+          return JSON.stringify(
+            response.data.map((item) => ({ name: item.name, type: item.type, path: item.path }))
+          );
+        }
+
+        if (response.data.type === "file" && response.data.content) {
+          const buffer = Buffer.from(response.data.content, "base64");
+          return buffer.toString("utf8");
+        }
+
+        return "Could not read file content. It may not be a file or is empty.";
+      } catch (error) {
+        if (error.status === 404) {
+          return `File or directory not found at path: ${path}`;
+        }
+        console.error("Error reading GitHub file:", error);
+        return `Error reading file: ${error.message}`;
+      }
+    },
+    {
+      name: "read_github_repo_file",
+      description: "Read the contents of a file or directory from the GitHub repository.",
+      schema: z.object({
+        owner: z.string().optional().describe("GitHub repository owner. Optional if environment variable is set."),
+        repo: z.string().optional().describe("GitHub repository name. Optional if environment variable is set."),
+        path: z.string().describe("Path to the file or directory in the repository"),
+        branch: z.string().optional().describe("Branch to read from. Defaults to the base branch."),
+      }),
+    }
+  );
+}
