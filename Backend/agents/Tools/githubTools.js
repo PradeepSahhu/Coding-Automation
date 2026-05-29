@@ -300,13 +300,13 @@ export function createPullRequestTool() {
       schema: z.object({
         owner: z
           .string()
-          .optional()
+          .optional().nullable()
           .describe(
             "GitHub repository owner, e.g. octocat. Optional if GITHUB_REPO_OWNER is set.",
           ),
         repo: z
           .string()
-          .optional()
+          .optional().nullable()
           .describe(
             "GitHub repository name. Optional if GITHUB_REPO_NAME is set.",
           ),
@@ -319,14 +319,14 @@ export function createPullRequestTool() {
         title: z.string().describe("Pull request title"),
         base: z
           .string()
-          .optional()
+          .optional().nullable()
           .describe(
             "Target branch name, e.g. main. Optional if GITHUB_BASE_BRANCH is set.",
           ),
-        body: z.string().optional().describe("Pull request description/body"),
+        body: z.string().optional().nullable().describe("Pull request description/body"),
         commitMessage: z
           .string()
-          .optional()
+          .optional().nullable()
           .describe("Commit message for file changes"),
         fileChanges: z
           .array(
@@ -382,10 +382,10 @@ export function createReadGithubFileTool() {
       name: "read_github_repo_file",
       description: "Read the contents of a file or directory from the GitHub repository.",
       schema: z.object({
-        owner: z.string().optional().describe("GitHub repository owner. Optional if environment variable is set."),
-        repo: z.string().optional().describe("GitHub repository name. Optional if environment variable is set."),
+        owner: z.string().optional().nullable().describe("GitHub repository owner. Optional if environment variable is set."),
+        repo: z.string().optional().nullable().describe("GitHub repository name. Optional if environment variable is set."),
         path: z.string().describe("Path to the file or directory in the repository"),
-        branch: z.string().optional().describe("Branch to read from. Defaults to the base branch."),
+        branch: z.string().optional().nullable().describe("Branch to read from. Defaults to the base branch."),
       }),
     }
   );
