@@ -206,6 +206,10 @@ export async function createFollowUpInstructionFromPullRequestFeedback({
     return null;
   }
 
+  if (linked.status === "completed") {
+    return null;
+  }
+
   const issueId = linked.issue_id;
   const nextInstruction = [
     "Reviewer requested updates on existing pull request.",
