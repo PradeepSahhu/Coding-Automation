@@ -48,7 +48,7 @@ function App() {
 
   useEffect(() => {
     fetchData()
-    const interval = setInterval(fetchData, 60000)
+    const interval = setInterval(fetchData, 15000)
     return () => clearInterval(interval)
   }, [])
 
@@ -76,7 +76,7 @@ function App() {
 
     fetchLogs()
     let interval
-    if (selectedInstruction.status === 'in_progress') {
+    if (selectedInstruction.status === 'in_progress' || selectedInstruction.status === 'pending') {
       interval = setInterval(fetchLogs, 2500)
     }
 

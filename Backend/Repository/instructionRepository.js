@@ -430,7 +430,7 @@ export async function getAgentExecutionLogs(instructionId) {
     SELECT log_line, created_at
     FROM agent_execution_logs
     WHERE instruction_id = $1
-    ORDER BY created_at ASC;
+    ORDER BY created_at DESC;
   `;
   const result = await pool.query(query, [instructionId]);
   return result.rows;
