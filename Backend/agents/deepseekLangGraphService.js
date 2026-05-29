@@ -215,7 +215,7 @@ export function createDeepseekModel() {
 
   const modelName = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 
-  return new ChatOpenAI({
+  const model = new ChatOpenAI({
     model: modelName,
     temperature: 0,
     openAIApiKey: apiKey,
@@ -223,6 +223,15 @@ export function createDeepseekModel() {
       baseURL: "https://api.deepseek.com",
     },
   });
+
+  // Polyfill bindTools if missing due to @langchain/core version mismatches
+  if (typeof model.bindTools !== "function") {
+    model.bindTools = (tools, kwargs) => {
+      return model.bind({ tools: tools, ...kwargs });
+    };
+  }
+
+  return model;
 }
 
 export async function validateDeepseekModelConfiguration() {
