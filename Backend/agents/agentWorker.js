@@ -167,10 +167,6 @@ function spawnWorker(row) {
 }
 
 async function pumpPendingInstructions() {
-  if (process.env.DISABLE_LLM_CALLS === "true") {
-    return;
-  }
-
   if (pumpInProgress) {
     pumpRequested = true;
     return;
@@ -181,6 +177,12 @@ async function pumpPendingInstructions() {
   try {
     do {
       pumpRequested = false;
+
+      if (process.env.DISABLE_LLM_CALLS === "true") {
+        return;
+      }
+
+      logger.info("Checking database for pending tasks...");
 
       while (activeWorkers.size < MAX_CONCURRENT_WORKERS) {
         const row = await claimNextPendingInstruction();
