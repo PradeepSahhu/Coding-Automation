@@ -11,11 +11,13 @@ import {
   markInstructionFailed,
   saveInstructionPullRequest,
   resetInProgressInstructions,
+  getInReviewInstructions,
 } from "../Repository/instructionRepository.js";
 import {
   transitionIssueToDone,
   transitionIssueToInProgress,
 } from "./Tools/jiraTools.js";
+import { Octokit } from "@octokit/rest";
 
 const NOTIFY_CHANNEL =
   process.env.AGENT_NOTIFY_CHANNEL || "agent_instruction_created";
@@ -225,11 +227,48 @@ export async function startAgentWorker() {
   setInterval(async () => {
     logger.info("Backend is polling database for pending tasks (every 15 seconds)...");
     await pumpPendingInstructions();
+    await pollInReviewTasks();
   }, POLLING_INTERVAL_MS);
 
   console.log(
     `Agent worker listening on Postgres channel '${NOTIFY_CHANNEL}' and polling every ${POLLING_INTERVAL_MS / 1000}s with max concurrency ${MAX_CONCURRENT_WORKERS}`,
   );
+}
+
+async function pollInReviewTasks() {
+  if (process.env.DISABLE_LLM_CALLS === "true") return;
+
+  try {
+    const tasks = await getInReviewInstructions();
+    if (tasks.length === 0) return;
+
+    const token = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN;
+    if (!token) return;
+
+    const octokit = new Octokit({ auth: token });
+
+    for (const task of tasks) {
+      try {
+        const { data: pr } = await octokit.pulls.get({
+          owner: task.pr_owner,
+          repo: task.pr_repo,
+          pull_number: task.pr_number,
+        });
+
+        if (pr.merged) {
+          logger.info(`Polling detected PR #${task.pr_number} merged for instruction ${task.id}`);
+          await handlePullRequestMerged({ owner: task.pr_owner, repo: task.pr_repo, number: task.pr_number });
+        } else if (pr.state === 'closed') {
+          logger.info(`Polling detected PR #${task.pr_number} closed without merge for instruction ${task.id}`);
+          await handlePullRequestClosedWithoutMerge({ owner: task.pr_owner, repo: task.pr_repo, number: task.pr_number });
+        }
+      } catch (err) {
+        console.error(`Error checking PR status for instruction ${task.id}:`, err);
+      }
+    }
+  } catch (error) {
+    console.error("Error in pollInReviewTasks:", error);
+  }
 }
 
 /**

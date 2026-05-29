@@ -411,6 +411,19 @@ export async function insertInstructionIntoDeadLetterQueue({
   return result.rows?.[0] || null;
 }
 
+export async function getInReviewInstructions({
+  tableName = DEFAULT_TABLE_NAME,
+} = {}) {
+  const tableRef = getSafeTableName(tableName);
+  const query = `
+    SELECT id, pr_owner, pr_repo, pr_number
+    FROM ${tableRef}
+    WHERE status = 'in_review' AND pr_owner IS NOT NULL AND pr_repo IS NOT NULL AND pr_number IS NOT NULL;
+  `;
+  const result = await pool.query(query);
+  return result.rows || [];
+}
+
 export async function getAllInstructions({
   tableName = DEFAULT_TABLE_NAME,
 } = {}) {
