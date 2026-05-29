@@ -97,6 +97,31 @@ function App() {
     }
   }
 
+  const handleDeleteTask = async (e, id) => {
+    e.stopPropagation()
+    if (!window.confirm("Are you sure you want to delete this task? This action cannot be undone.")) {
+      return;
+    }
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/instructions/${id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        throw new Error('Failed to delete task')
+      }
+      const data = await res.json()
+      if (data.success) {
+        if (selectedInstructionId === id) {
+          setSelectedInstructionId(null)
+        }
+        fetchData()
+      }
+    } catch (err) {
+      console.error('Error deleting task:', err)
+      alert('Failed to delete task. See console for details.')
+    }
+  }
+
   const getDurationText = (item) => {
     if (!item.started_at) return null
     const start = new Date(item.started_at)
@@ -119,7 +144,16 @@ function App() {
       <div className="container">
         <header>
           <h1>Task Overview</h1>
-          <button onClick={() => setSelectedInstructionId(null)} className="refresh-btn">Back to Dashboard</button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              onClick={(e) => handleDeleteTask(e, selectedInstruction.id)} 
+              className="refresh-btn" 
+              style={{ backgroundColor: '#ef4444', borderColor: '#b91c1c' }}
+            >
+              Delete Task
+            </button>
+            <button onClick={() => setSelectedInstructionId(null)} className="refresh-btn">Back to Dashboard</button>
+          </div>
         </header>
         
         <div className="details-view">
@@ -212,12 +246,21 @@ function App() {
             <div key={item.id} className="card clickable-card" onClick={() => setSelectedInstructionId(item.id)}>
               <div className="card-header">
                 <span className="issue-id">{item.issue_id}</span>
-                <span 
-                  className="status-badge" 
-                  style={{ backgroundColor: getStatusColor(item.status) }}
-                >
-                  {item.status === 'failed_pr' ? 'Unable to create PR' : item.status.replace('_', ' ')}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span 
+                    className="status-badge" 
+                    style={{ backgroundColor: getStatusColor(item.status) }}
+                  >
+                    {item.status === 'failed_pr' ? 'Unable to create PR' : item.status.replace('_', ' ')}
+                  </span>
+                  <button 
+                    className="delete-btn" 
+                    onClick={(e) => handleDeleteTask(e, item.id)}
+                    title="Remove Task"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
               <div className="card-body">
                 <p className="instruction-text">

@@ -59,3 +59,19 @@ export const getInstructionLogs = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+import { deleteInstruction } from "../Repository/instructionRepository.js";
+
+export const removeInstruction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await deleteInstruction({ instructionId: Number(id) });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Instruction not found" });
+    }
+    return res.status(200).json({ success: true, message: "Instruction removed successfully" });
+  } catch (error) {
+    console.error("Error removing instruction:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

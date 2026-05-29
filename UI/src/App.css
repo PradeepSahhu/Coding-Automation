@@ -212,6 +212,26 @@ h1 {
   cursor: pointer;
 }
 
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;

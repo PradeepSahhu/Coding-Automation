@@ -435,3 +435,21 @@ export async function getAgentExecutionLogs(instructionId) {
   const result = await pool.query(query, [instructionId]);
   return result.rows;
 }
+
+export async function deleteInstruction({
+  instructionId,
+  tableName = DEFAULT_TABLE_NAME,
+} = {}) {
+  const tableRef = getSafeTableName(tableName);
+  
+  // Also clean up any execution logs before deleting the main record to maintain referential integrity
+  await pool.query('DELETE FROM agent_execution_logs WHERE instruction_id = $1', [instructionId]);
+  
+  const query = `
+    DELETE FROM ${tableRef}
+    WHERE id = $1
+    RETURNING id;
+  `;
+  const result = await pool.query(query, [instructionId]);
+  return result.rows?.[0] || null;
+}

@@ -14,6 +14,7 @@ import {
   getTasks,
   healthCheck,
   getInstructionLogs,
+  removeInstruction,
 } from "./Controllers/instructionController.js";
 
 const app = express();
@@ -39,6 +40,7 @@ app.get("/api/instructions", getInstructions);
 app.get("/api/logs", getLogs);
 app.get("/api/tasks", getTasks);
 app.get("/api/instructions/:id/logs", getInstructionLogs);
+app.delete("/api/instructions/:id", removeInstruction);
 
 async function bootstrap() {
   const { modelName } = await validateDeepseekModelConfiguration();
