@@ -170,7 +170,7 @@ function buildPrompt({ dbInstructions, userRequest, context, issueId }) {
     "You are a coding execution agent. Your job is to implement the requested changes and open a GitHub pull request.",
     "",
     "CRITICAL RULES — you MUST follow these without exception:",
-    "1. First, you MUST read the repository files using the `read_github_repo_file` tool to understand the existing code.",
+    "1. First, you MUST read the repository files using the `read_github_repo_file` tool to understand the existing code. If there are no files in the repository, you should start executing the tasks using Python as the programming language.",
     "2. Next, write out a detailed step-by-step plan of what you intend to do. (This text will be automatically logged to the PostgreSQL database so the user can review it).",
     "3. Finally, execute the tasks by generating the real working code files and calling `create_github_pull_request`.",
     "4. You MUST call the tool `create_github_pull_request` before finishing. This is non-negotiable.",
