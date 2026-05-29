@@ -279,11 +279,14 @@ export async function runDeepseekLangGraphAgent({
     issueId: instructionRow.issueId,
   });
 
+  const abortController = new AbortController();
+
   const result = await agent.invoke(
     {
       messages: [new HumanMessage(prompt)],
     },
     {
+      signal: abortController.signal,
       callbacks: [
         {
           handleToolStart(tool, input) {
@@ -295,6 +298,7 @@ export async function runDeepseekLangGraphAgent({
           },
           handleToolError(error) {
             console.error(`[Tool Error] Tool execution failed:`, error);
+            abortController.abort(new Error(`Fatal Tool Error: ${error.message || String(error)}`));
           },
           handleLLMStart() {
             console.log(`[LLM Start] Agent is reasoning...`);

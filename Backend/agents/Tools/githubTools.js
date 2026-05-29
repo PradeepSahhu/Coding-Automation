@@ -82,6 +82,22 @@ async function ensureBranch({ octokit, owner, repo, base, branchName }) {
   } catch (error) {
     if (error.status === 409 || error.status === 404) {
       console.log(`Base branch ${base} not found. Initializing repository...`);
+      
+      try {
+        await octokit.repos.get({ owner, repo });
+      } catch (repoErr) {
+        if (repoErr.status === 404) {
+          console.log(`Repository ${owner}/${repo} does not exist. Creating it automatically...`);
+          try {
+            await octokit.repos.createForAuthenticatedUser({ name: repo, private: true });
+          } catch (createErr) {
+            console.log(`Failed to create repo as user, trying as org...`);
+            await octokit.repos.createInOrg({ org: owner, name: repo, private: true });
+          }
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+      }
+
       await octokit.repos.createOrUpdateFileContents({
         owner,
         repo,
