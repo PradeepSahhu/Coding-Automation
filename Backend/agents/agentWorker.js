@@ -165,6 +165,10 @@ function spawnWorker(row) {
 }
 
 async function pumpPendingInstructions() {
+  if (process.env.DISABLE_LLM_CALLS === "true") {
+    return;
+  }
+
   if (pumpInProgress) {
     pumpRequested = true;
     return;
@@ -194,6 +198,10 @@ async function pumpPendingInstructions() {
 }
 
 export async function startAgentWorker() {
+  if (process.env.DISABLE_LLM_CALLS === "true") {
+    console.warn("LLM calls are globally disabled by DISABLE_LLM_CALLS environment variable. Agent will not claim new tasks.");
+  }
+
   const resetTasks = await resetInProgressInstructions();
   if (resetTasks.length > 0) {
     logger.info(`Reset ${resetTasks.length} stuck 'in_progress' tasks back to 'pending'.`);
