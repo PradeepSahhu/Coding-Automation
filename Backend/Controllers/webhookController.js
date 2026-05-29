@@ -38,10 +38,16 @@ export const githubWebhookHandler = async (req, res) => {
       const repoOwner = owner?.login || login; // Handle both payload styles
 
       if (payload.action === "closed") {
-        const result = payload.pull_request.merged 
-          ? await handlePullRequestMerged({ owner: repoOwner, repo, number })
-          : await handlePullRequestClosedWithoutMerge({ owner: repoOwner, repo, number });
-        return res.status(200).json({ success: true, ...result });
+        if (payload.pull_request.merged) {
+          logger.info(`GitHub PR #${number} merged webhook received.`, { 
+            pr_data: payload.pull_request 
+          });
+          const result = await handlePullRequestMerged({ owner: repoOwner, repo, number });
+          return res.status(200).json({ success: true, ...result });
+        } else {
+          const result = await handlePullRequestClosedWithoutMerge({ owner: repoOwner, repo, number });
+          return res.status(200).json({ success: true, ...result });
+        }
       }
     }
 

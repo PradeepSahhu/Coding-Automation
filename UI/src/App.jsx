@@ -312,7 +312,7 @@ function App() {
               <span className="log-time">{new Date(log.timestamp).toLocaleTimeString()}</span>
               <span className="log-level">{log.level.toUpperCase()}</span>
               <span className="log-msg">{log.message}</span>
-              {log.context && <pre className="log-ctx">{JSON.stringify(log.context)}</pre>}
+              {log.context && <pre className="log-ctx">{JSON.stringify(log.context, null, 2)}</pre>}
             </div>
           ))}
         </div>
