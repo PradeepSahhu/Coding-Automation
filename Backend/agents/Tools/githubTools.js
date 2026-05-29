@@ -33,11 +33,11 @@ function resolveGitHubTarget({ owner, repo, base }) {
   const envRepo = process.env.GITHUB_REPO_NAME;
   const envBase = process.env.GITHUB_BASE_BRANCH || "main";
 
-  const resolvedOwner = isPlaceholderValue(owner) ? envOwner : owner;
-  const resolvedRepo = isPlaceholderValue(repo) ? envRepo : repo;
-  const resolvedBase = isPlaceholderValue(base) ? envBase : base;
+  const resolvedOwner = envOwner || (isPlaceholderValue(owner) ? null : owner);
+  const resolvedRepo = envRepo || (isPlaceholderValue(repo) ? null : repo);
+  const resolvedBase = envBase || (isPlaceholderValue(base) ? "main" : base);
 
-  if (isPlaceholderValue(resolvedOwner) || isPlaceholderValue(resolvedRepo)) {
+  if (!resolvedOwner || !resolvedRepo || isPlaceholderValue(resolvedOwner) || isPlaceholderValue(resolvedRepo)) {
     throw new Error(
       "Invalid GitHub target repository. Set GITHUB_REPO_OWNER and GITHUB_REPO_NAME in environment, or provide non-placeholder owner/repo tool inputs.",
     );
