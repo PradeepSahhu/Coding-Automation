@@ -3,14 +3,14 @@ import { Client, Pool } from "pg";
 const DEFAULT_TABLE_NAME =
   process.env.AGENT_INSTRUCTIONS_TABLE || "agent_instructions";
 
+const isLocalUrl = process.env.DATABASE_URL && (process.env.DATABASE_URL.includes("localhost") || process.env.DATABASE_URL.includes("127.0.0.1"));
+
 const dbConfig = process.env.DATABASE_URL
   ? {
       connectionString: process.env.DATABASE_URL.includes("uselibpqcompat") 
         ? process.env.DATABASE_URL 
         : `${process.env.DATABASE_URL}${process.env.DATABASE_URL.includes("?") ? "&" : "?"}uselibpqcompat=true`,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ...(isLocalUrl ? {} : { ssl: { rejectUnauthorized: false } }),
     }
   : {
       host: process.env.POSTGRES_HOST || "localhost",
