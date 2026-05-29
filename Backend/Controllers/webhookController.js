@@ -130,25 +130,38 @@ export const jiraWebhookHandler = async (req, res) => {
       const { commentBody } = getCommentInformation(data);
       const commentText = typeof commentBody === "string" ? commentBody : JSON.stringify(commentBody || "");
 
+      const existing = await getInstructionByIssueId({ issueId });
+
+      if (existing) {
+        if (existing.status === "pending") {
+          const updatedText = existing.instructions + "\n\nUpdate from Jira Comment:\n" + commentText;
+          await updateInstructionText({ instructionId: existing.id, instructions: updatedText });
+          return res.status(200).json({ success: true, updated: true });
+        }
+
+        if (existing.status === "completed") {
+          logger.info(`Ignored Jira comment on issue ${issueId} because the task is already completed.`);
+          return res.status(200).json({ success: true, ignored: true, message: "Task is already completed" });
+        }
+
+        if (existing.status === "failed" || existing.status === "failed_pr") {
+          const updatedText = existing.instructions + "\n\nUpdate from Jira Comment:\n" + commentText;
+          await resetFailedInstructionToPending({ instructionId: existing.id, instructions: updatedText });
+          return res.status(200).json({ success: true, reset: true });
+        }
+
+        // If in_progress or in_review, we ignore Jira comments to prevent creating duplicate concurrent tasks
+        logger.info(`Ignored Jira comment on issue ${issueId} because the task is currently ${existing.status}.`);
+        return res.status(200).json({ success: true, ignored: true, message: `Task is ${existing.status}` });
+      }
+
+      // Only create a brand new task if one never existed at all
       const instructionText = [
         `A new comment has been posted on Jira issue: ${issueId}`,
         `Comment: ${commentText}`,
         "",
         "Analyze this comment and perform the requested work. If changes are needed, update the code and the PR. Post a comment back to Jira if feedback or clarification is needed."
       ].join("\n");
-
-      const existing = await getInstructionByIssueId({ issueId });
-
-      if (existing && existing.status === "pending") {
-        const updatedText = existing.instructions + "\n\nUpdate from Jira Comment:\n" + commentText;
-        await updateInstructionText({ instructionId: existing.id, instructions: updatedText });
-        return res.status(200).json({ success: true, updated: true });
-      }
-
-      if (existing && existing.status === "completed") {
-        logger.info(`Ignored Jira comment on issue ${issueId} because the task is already completed.`);
-        return res.status(200).json({ success: true, ignored: true, message: "Task is already completed" });
-      }
 
       await createInstructionFromJiraAssignment({ 
         issueId, 
