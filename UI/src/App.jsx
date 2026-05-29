@@ -131,7 +131,7 @@ function App() {
             <div className="modal-meta-card">
               <span className="meta-label">Status</span>
               <span className="status-badge" style={{ backgroundColor: getStatusColor(selectedInstruction.status) }}>
-                {selectedInstruction.status === 'failed_pr' ? 'PR Failed' : selectedInstruction.status.replace('_', ' ')}
+                {selectedInstruction.status === 'failed_pr' ? 'Unable to create PR' : selectedInstruction.status.replace('_', ' ')}
               </span>
             </div>
             {getDurationText(selectedInstruction) && (
@@ -216,7 +216,7 @@ function App() {
                   className="status-badge" 
                   style={{ backgroundColor: getStatusColor(item.status) }}
                 >
-                  {item.status === 'failed_pr' ? 'PR Failed' : item.status.replace('_', ' ')}
+                  {item.status === 'failed_pr' ? 'Unable to create PR' : item.status.replace('_', ' ')}
                 </span>
               </div>
               <div className="card-body">
