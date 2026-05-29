@@ -88,8 +88,9 @@ async function ensureBranch({ octokit, owner, repo, base, branchName }) {
         path: "README.md",
         message: "Initial commit",
         content: Buffer.from("# Project initialized by Agent").toString("base64"),
-        branch: base,
       });
+      // Give GitHub a moment to set the default branch
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       baseRef = await getBranchRef({ octokit, owner, repo, branch: base });
     } else {
       throw error;
